@@ -28,6 +28,7 @@ import org.opendc.compute.simulator.scheduler.ComputeScheduler
 import org.opendc.compute.simulator.scheduler.ComputeSchedulerEnum
 import org.opendc.compute.simulator.scheduler.FilterScheduler
 import org.opendc.compute.simulator.scheduler.createPrefabComputeScheduler
+import org.opendc.compute.simulator.scheduler.timeshift.DTScheduler
 import org.opendc.compute.simulator.scheduler.timeshift.MemorizingTimeshift
 import org.opendc.compute.simulator.scheduler.timeshift.TaskStopper
 import org.opendc.compute.simulator.scheduler.timeshift.TimeshiftScheduler
@@ -72,6 +73,22 @@ public data class TimeShiftAllocationPolicySpec(
     val memorize: Boolean = true,
 ) : AllocationPolicySpec
 
+@Serializable
+@SerialName("doublethreshold")
+public data class DoubleThresholdAllocationPolicySpec(
+    val filters: List<HostFilterSpec> = listOf(ComputeFilterSpec()),
+    val weighers: List<HostWeigherSpec> = emptyList(),
+    val windowSize: Int = 168,
+    val subsetSize: Int = 1,
+    val forecast: Boolean = true,
+    val shortForecastThreshold: Double = 0.2,
+    val longForecastThreshold: Double = 0.35,
+    val forecastSize: Int = 24,
+    val taskStopper: TaskStopperSpec? = null,
+    val memorize: Boolean = true,
+) : AllocationPolicySpec
+
+
 public fun createComputeScheduler(
     spec: AllocationPolicySpec,
     seeder: RandomGenerator,
@@ -103,6 +120,12 @@ public fun createComputeScheduler(
                     spec.shortForecastThreshold, spec.longForecastThreshold, spec.forecastSize, seeder,
                 )
             }
+        }
+        is DoubleThresholdAllocationPolicySpec -> {
+            val filters = spec.filters.map { createHostFilter(it) }
+            val weighers = spec.weighers.map { createHostWeigher(it) }
+            DTScheduler(filters, weighers, spec.windowSize, clock, spec.subsetSize, spec.forecast,
+                spec.shortForecastThreshold, spec.longForecastThreshold, spec.forecastSize, seeder,)
         }
     }
 }
