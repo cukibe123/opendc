@@ -98,6 +98,7 @@ public class DTScheduler(
                             // No need to schedule this task in a high carbon intensity period
                             continue
                         }
+                        task.pausable = false
                     }
                 }
             }
