@@ -33,6 +33,7 @@ import org.opendc.compute.simulator.service.ComputeService
 import org.opendc.compute.simulator.telemetry.parquet.ParquetComputeMonitor
 import org.opendc.compute.topology.clusterTopology
 import org.opendc.experiments.base.experiment.Scenario
+import org.opendc.experiments.base.experiment.specs.allocation.DoubleThresholdAllocationPolicySpec
 import org.opendc.experiments.base.experiment.specs.allocation.TimeShiftAllocationPolicySpec
 import org.opendc.experiments.base.experiment.specs.allocation.createComputeScheduler
 import org.opendc.experiments.base.experiment.specs.allocation.createTaskStopper
@@ -116,6 +117,8 @@ public fun runScenario(
                                 timeSource,
                             )
 
+//                        println(computeScheduler)
+
                         provisioner.registry.register(serviceDomain, ComputeScheduler::class.java, computeScheduler)
 
                         return@setupComputeService computeScheduler
@@ -153,6 +156,21 @@ public fun runScenario(
                         carbonModel.addReceiver(taskStopper)
                     }
                 }
+
+                if (scenario.allocationPolicySpec is DoubleThresholdAllocationPolicySpec) {
+                    println("Task stopper is created")
+                    val taskStopper =
+                        createTaskStopper(
+                            scenario.allocationPolicySpec.taskStopper,
+                            coroutineContext,
+                            timeSource,
+                        )
+                    if (taskStopper != null) {
+                        taskStopper.setService(service)
+                        carbonModel.addReceiver(taskStopper)
+                    }
+                }
+
             }
 
             service.replay(
