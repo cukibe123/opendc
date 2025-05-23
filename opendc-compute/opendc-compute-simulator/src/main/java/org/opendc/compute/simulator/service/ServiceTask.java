@@ -69,6 +69,13 @@ public class ServiceTask {
     private int numFailures = 0;
     private int numPauses = 0;
 
+    //pauseStatus remembers if this task is currently paused or no
+    private boolean pauseStatus = false;
+
+    //pauseable remembers if this task should be paused or no
+    private boolean pausable;
+
+
     ServiceTask(
             ComputeService service,
             UUID uid,
@@ -88,10 +95,20 @@ public class ServiceTask {
         this.flavor = flavor;
         this.workload = workload;
         this.meta = meta;
+        //Pausable if it is deferrable
+        this.pausable = nature.deferrable;
 
         this.submittedAt = this.service.getClock().instant();
     }
 
+    @NotNull
+    public boolean getPauseStatus() { return pauseStatus; }
+
+    public boolean getPausable() { return pausable; }
+
+    public void setPausable(boolean status) { this.pausable = status; }
+
+    public void setPauseStatus(boolean status) { this.pauseStatus = status; }
     @NotNull
     public UUID getUid() {
         return uid;
