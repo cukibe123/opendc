@@ -42,6 +42,10 @@ public interface Timeshifter : CarbonReceiver {
     public var longLowCarbon: Boolean // Low carbon regime for long tasks (>= hours)
     public var carbonMod: CarbonModel?
 
+    public var currentCarbonIntensity: Double
+    public var lowerThreshold: Double
+    public var upperThreshold: Double
+
     /**
      Compare current carbon intensity to the chosen quantile from the [forecastSize]
      number of intensity forecasts

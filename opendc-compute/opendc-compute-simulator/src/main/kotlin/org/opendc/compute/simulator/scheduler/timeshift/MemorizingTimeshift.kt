@@ -56,6 +56,10 @@ public class MemorizingTimeshift(
     override var longLowCarbon: Boolean = false // Low carbon regime for long tasks (>= hours)
     override var carbonMod: CarbonModel? = null
 
+    override var currentCarbonIntensity: Double = 0.0
+    override var lowerThreshold: Double = 0.0
+    override var upperThreshold: Double = 0.0
+
     override fun addHost(host: HostView) {
         val zeroQueue = hostsQueue[0]
         zeroQueue.add(host)

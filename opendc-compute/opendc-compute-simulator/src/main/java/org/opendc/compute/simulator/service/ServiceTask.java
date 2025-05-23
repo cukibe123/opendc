@@ -69,6 +69,10 @@ public class ServiceTask {
     private int numFailures = 0;
     private int numPauses = 0;
 
+    private boolean preScheduled = false;
+
+    private Instant scheduledTime;
+
     ServiceTask(
             ComputeService service,
             UUID uid,
@@ -92,6 +96,11 @@ public class ServiceTask {
         this.submittedAt = this.service.getClock().instant();
     }
 
+    public Instant getScheduledTime() { return scheduledTime; }
+    public boolean getPreScheduled() { return preScheduled; }
+
+    public void setScheduledTime(Instant scheduledTime) { this.scheduledTime = scheduledTime; }
+    public void setPreScheduled(boolean status) { this.preScheduled = status; }
     @NotNull
     public UUID getUid() {
         return uid;
