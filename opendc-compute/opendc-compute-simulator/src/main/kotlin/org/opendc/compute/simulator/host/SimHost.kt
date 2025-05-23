@@ -157,6 +157,22 @@ public class SimHost(
         }
     }
 
+    /**
+    Pause partially the number of tasks
+     */
+    public fun pausePartially() {
+        val iterator = guests.iterator()
+        while (iterator.hasNext()) {
+            val guest = iterator.next()
+            if (guest.task.pausable && guest.task.pauseStatus == false) {
+                guest.task.pauseStatus = true
+                guest.pause()
+                this.delete(guest.task)
+            }
+        }
+    }
+
+
     public fun pauseAllTasks() {
         while (guests.size > 0) {
             val guest = guests.first()
