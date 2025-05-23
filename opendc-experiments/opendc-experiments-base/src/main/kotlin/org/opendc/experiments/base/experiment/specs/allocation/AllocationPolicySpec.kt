@@ -31,6 +31,7 @@ import org.opendc.compute.simulator.scheduler.createPrefabComputeScheduler
 import org.opendc.compute.simulator.scheduler.timeshift.MemorizingTimeshift
 import org.opendc.compute.simulator.scheduler.timeshift.TaskStopper
 import org.opendc.compute.simulator.scheduler.timeshift.TimeshiftScheduler
+import org.opendc.compute.simulator.scheduler.timeshift.WaitAWhileScheduler
 import java.time.InstantSource
 import java.util.random.RandomGenerator
 import kotlin.coroutines.CoroutineContext
@@ -72,6 +73,21 @@ public data class TimeShiftAllocationPolicySpec(
     val memorize: Boolean = true,
 ) : AllocationPolicySpec
 
+@Serializable
+@SerialName("waitawhile")
+public data class WaitAWhileAllocationPolicySpec(
+    val filters: List<HostFilterSpec> = listOf(ComputeFilterSpec()),
+    val weighers: List<HostWeigherSpec> = emptyList(),
+    val windowSize: Int = 168,
+    val subsetSize: Int = 1,
+    val forecast: Boolean = true,
+    val shortForecastThreshold: Double = 0.2,
+    val longForecastThreshold: Double = 0.35,
+    val forecastSize: Int = 24,
+    val taskStopper: TaskStopperSpec? = null,
+) : AllocationPolicySpec
+
+
 public fun createComputeScheduler(
     spec: AllocationPolicySpec,
     seeder: RandomGenerator,
@@ -104,7 +120,16 @@ public fun createComputeScheduler(
                 )
             }
         }
+
+        is WaitAWhileAllocationPolicySpec -> {
+            val filters = spec.filters.map { createHostFilter(it) }
+            val weighers = spec.weighers.map { createHostWeigher(it) }
+            WaitAWhileScheduler(filters, weighers, spec.windowSize, clock, spec.subsetSize, spec.forecast,
+                spec.shortForecastThreshold, spec.longForecastThreshold, spec.forecastSize, seeder)
+        }
+
     }
+
 }
 
 @Serializable
