@@ -78,16 +78,10 @@ public class DTScheduler(
                     //Must update the pauseStatus if the task continues
                     //Add one more variable to control the interrupts
                     //Add threshold for interrupts
-                    task.pauseStatus = false
                     task.pausable = false
                 }
-                else {
-                    task.pauseStatus = false
-                }
             }
-            else if (task.pausable == false) {
-                task.pauseStatus = false
-            }
+            else if (task.pausable == false) {}
             else {
                 if (task.nature.deferrable) {
                     if (upperThreshold < currentCarbonIntensity) {
