@@ -71,7 +71,6 @@ public interface Timeshifter : CarbonReceiver {
 
         upperThreshold = forecast.sorted()[(localForecastSize * 0.8).roundToInt()]
         lowerThreshold = forecast.sorted()[(localForecastSize * 0.4).roundToInt()]
-
     }
 
     /**
