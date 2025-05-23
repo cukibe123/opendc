@@ -118,3 +118,6 @@ gradle-app.setting
 
 # Demo files
 demo/*
+
+#test folder
+/test
