@@ -51,6 +51,9 @@ public class TaskStopper(
     private var service: ComputeService? = null
     private var client: ComputeService.ComputeClient? = null
 
+    private var lowerCarbonIntensityThreshold : Double = 0.0
+    private var upperCarbonIntensityThreshold : Double = 0.0
+
     public fun setService(service: ComputeService) {
         this.service = service
         this.client = service.newClient()
@@ -66,10 +69,16 @@ public class TaskStopper(
                     it.virtualMachine!!.snapshot
                 }
             val tasks = guests.map { it.task }
-            host.pauseAllTasks()
+
+            /**
+             * All tasks would be switched to PAUSED at this point
+             */
+            host.pausePartially()
 
             for ((task, snapshot) in tasks.zip(snapshots)) {
-                client!!.rescheduleTask(task, snapshot)
+                if (task.pausable && task.pauseStatus == true) {
+                    client!!.rescheduleTask(task, snapshot)
+                }
             }
         }
     }
@@ -81,10 +90,15 @@ public class TaskStopper(
             val forecast = carbonModel!!.getForecast(forecastSize)
 
             val localForecastSize = forecast.size
+
+            //forecastThreshold is set at 0.8
             val quantileIndex = (localForecastSize * forecastThreshold).roundToInt()
             val thresholdCarbonIntensity = forecast.sorted()[quantileIndex]
 
-            isHighCarbon = newCarbonIntensity > thresholdCarbonIntensity
+            this.lowerCarbonIntensityThreshold = forecast.sorted()[(localForecastSize * 0.4).roundToInt()]
+            this.upperCarbonIntensityThreshold = thresholdCarbonIntensity
+
+            isHighCarbon = newCarbonIntensity > upperCarbonIntensityThreshold
         }
 
         if (isHighCarbon) {
@@ -101,7 +115,21 @@ public class TaskStopper(
             this.carbonRunningSum -= this.pastCarbonIntensities.removeFirst()
         }
 
-        val thresholdCarbonIntensity = this.carbonRunningSum / this.pastCarbonIntensities.size
+        //val thresholdCarbonIntensity = this.carbonRunningSum / this.pastCarbonIntensities.size
+
+        /**
+        In case of no forecast, we just care about the current threshold intensity
+        If it is higher than the average of previous window size, then we stop the task
+        The lowerbound is defined by 90% of the current threshold intensity
+         */
+
+        val upperQuantileIndex = (this.pastCarbonIntensities.size * 0.8).roundToInt()
+        val lowerQuantileIndex = (this.pastCarbonIntensities.size * 0.4).roundToInt()
+
+        val thresholdCarbonIntensity = pastCarbonIntensities.sorted()[upperQuantileIndex]
+
+        this.lowerCarbonIntensityThreshold = pastCarbonIntensities.sorted()[lowerQuantileIndex]
+        this.upperCarbonIntensityThreshold = pastCarbonIntensities.sorted()[upperQuantileIndex]
 
         isHighCarbon = (newCarbonIntensity > thresholdCarbonIntensity)
         return isHighCarbon
