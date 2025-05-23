@@ -81,7 +81,11 @@ public class WaitAWhileScheduler(
                 val taskDurationInHours = task.duration.toHours().toInt()
                 val deadline = Instant.ofEpochMilli(task.deadline)
                 val timeToDeadlineInHours = java.time.Duration.between(currentTime, deadline).toHours()
-                val forecast = carbonMod!!.getForecast(timeToDeadlineInHours.toInt())
+
+                var forecast: DoubleArray? = null
+                if (timeToDeadlineInHours.toInt() > 0) {
+                    forecast = carbonMod!!.getForecast(timeToDeadlineInHours.toInt())
+                }
 
                 //Implement logic for choosing best time window here
                 if (forecast != null && taskDurationInHours < timeToDeadlineInHours) {
