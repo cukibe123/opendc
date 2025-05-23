@@ -164,7 +164,7 @@ public class SimHost(
         val iterator = guests.iterator()
         while (iterator.hasNext()) {
             val guest = iterator.next()
-            if (guest.task.pausable && guest.task.pauseStatus == false) {
+            if (guest.task.pausable) {
                 guest.task.pauseStatus = true
                 guest.pause()
                 this.delete(guest.task)
