@@ -70,13 +70,14 @@ public class TaskStopper(
                 }
             val tasks = guests.map { it.task }
 
+
             /**
              * All tasks would be switched to PAUSED at this point
              */
             host.pausePartially()
 
             for ((task, snapshot) in tasks.zip(snapshots)) {
-                if (task.pausable && task.pauseStatus == true) {
+                if (task.pausable) {
                     client!!.rescheduleTask(task, snapshot)
                 }
             }
