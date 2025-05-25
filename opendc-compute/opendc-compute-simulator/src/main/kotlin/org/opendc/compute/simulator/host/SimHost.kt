@@ -157,6 +157,16 @@ public class SimHost(
         }
     }
 
+    public fun pausePartially() {
+        for (guest in guests) {
+            if (guest.task.pausable) {
+                guest.task.pauseStatus = true
+                guest.pause()
+                this.delete(guest.task)
+            }
+        }
+    }
+
     public fun pauseAllTasks() {
         while (guests.size > 0) {
             val guest = guests.first()
