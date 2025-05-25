@@ -18,6 +18,7 @@ import java.util.random.RandomGenerator
 import kotlin.math.min
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 import kotlin.time.toKotlinDuration
 
@@ -68,67 +69,53 @@ public class WaitAWhileScheduler(
             }
 
             val task = request.task
+            val currentTime = clock.instant()
 
             if (task.preScheduled) {
                 //If it is not the time, then we keep it waiting
-                val currentTime = clock.instant()
                 if (currentTime.isBefore(task.scheduledTime)) {
                     continue
                 }
             }
             else if (task.nature.deferrable) {
-                val currentTime = clock.instant()
-                val taskDurationInHours = task.duration.toHours().toInt()
+                val taskDurationInMinutes = task.duration.toMinutes().toInt()
                 val deadline = Instant.ofEpochMilli(task.deadline)
-                val timeToDeadlineInHours = java.time.Duration.between(currentTime, deadline).toHours()
+                val timeToDeadlineInMinutes = java.time.Duration.between(currentTime, deadline).toMinutes()
 
                 var forecast: DoubleArray? = null
-                if (timeToDeadlineInHours.toInt() > 0) {
-                    forecast = carbonMod!!.getForecast(timeToDeadlineInHours.toInt())
+                if (timeToDeadlineInMinutes.toInt() > 0) {
+                    forecast = carbonMod!!.getForecast(timeToDeadlineInMinutes.toInt() / 4)
                 }
 
                 //Implement logic for choosing best time window here
-                if (forecast != null && taskDurationInHours < timeToDeadlineInHours) {
-                    var estimatedDelayTime = 0
+                if (forecast != null && taskDurationInMinutes < timeToDeadlineInMinutes) {
+                    var estimatedDelayBlock = 0
                     var lowestWindow = 0.0
-                    for (i in 0 until forecast.size - taskDurationInHours - 1) {
-                        val range = forecast.copyOfRange(i, i + taskDurationInHours)
+                    for (i in 0 until forecast.size - taskDurationInMinutes / 4 - 1) {
+                        val range = forecast.copyOfRange(i, i + taskDurationInMinutes / 4)
                         val currentWindow = range.average()
                         if (lowestWindow == 0.0) {
+                            estimatedDelayBlock = 1
                             lowestWindow = currentWindow
                             continue
                         }
                         else {
                             if (currentWindow < lowestWindow) {
                                 lowestWindow = currentWindow
-                                estimatedDelayTime = i
+                                estimatedDelayBlock = i + 1
                             }
                         }
                     }
-                    val estimatedDelayTimeInDuration = estimatedDelayTime.hours
+                    val estimatedDelayTimeInMinutes = estimatedDelayBlock * 15
+                    val estimatedDelayTimeInDuration = estimatedDelayTimeInMinutes.minutes
                     val estimatedExecutionTime = currentTime.plus(estimatedDelayTimeInDuration.toJavaDuration())
-                    task.setScheduledTime(estimatedExecutionTime)
-                    task.setPreScheduled(true)
+                    task.scheduledTime = estimatedExecutionTime
+                    task.preScheduled = true
+                    continue
                 }
             }
 
-            //We check if the task is deferrable, and the best time to execute is later
-            //If it is not deferrable or it is best to execute now, then we do not run this if-statement
-
             val filteredHosts = hosts.filter { host -> filters.all { filter -> filter.test(host, task) } }
-
-            /**
-             * At this part, we consider if the targeted task is paused or not
-             * If it is paused, we consider the carbon upperbound at the time it was paused
-             * If the current carbon intensity is lower than the lowerbound, then we are good to schedule
-             * Otherwise, we wait further
-             * If the deadline allows, we proceed to the stage of delaying. If not, we must schedule tasks right now
-             */
-
-            /**
-             * If tasks can be scheduled right now, we must update the state of ServiceTask, changing the lowerbound
-             * carbon to null
-             */
 
             val subset =
                 if (weighers.isNotEmpty()) {
