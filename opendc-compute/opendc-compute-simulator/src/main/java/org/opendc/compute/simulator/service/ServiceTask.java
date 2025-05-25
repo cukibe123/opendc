@@ -69,6 +69,17 @@ public class ServiceTask {
     private int numFailures = 0;
     private int numPauses = 0;
 
+    private boolean pauseStatus = false;
+
+    private boolean pausable = true;
+
+    public boolean getPauseStatus() { return pauseStatus; }
+    public boolean getPausable() { return pausable; }
+
+    public void setPauseStatus(boolean status) { pauseStatus = status; }
+
+    public void setPausable(boolean status) { pausable = status; }
+
     ServiceTask(
             ComputeService service,
             UUID uid,
