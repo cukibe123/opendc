@@ -26,7 +26,7 @@ public class WaitAWhileScheduler(
     private val filters: List<HostFilter>,
     private val weighers: List<HostWeigher>,
     override val windowSize: Int,
-    override val clock : InstantSource,
+    override val clock: InstantSource,
     private val subsetSize: Int = 1,
     override val forecast: Boolean = true,
     override val shortForecastThreshold: Double = 0.2,
@@ -76,8 +76,7 @@ public class WaitAWhileScheduler(
                 if (currentTime.isBefore(task.scheduledTime)) {
                     continue
                 }
-            }
-            else if (task.nature.deferrable) {
+            } else if (task.nature.deferrable) {
                 val taskDurationInMinutes = task.duration.toMinutes().toInt()
                 val deadline = Instant.ofEpochMilli(task.deadline)
                 val timeToDeadlineInMinutes = java.time.Duration.between(currentTime, deadline).toMinutes()
@@ -88,30 +87,31 @@ public class WaitAWhileScheduler(
                 }
 
                 //Implement logic for choosing best time window here
+
+                //We execute right now
                 if (forecast != null && taskDurationInMinutes < timeToDeadlineInMinutes) {
+                    val currentCarbonList =
+                        forecast.copyOfRange(0, (taskDurationInMinutes / 4)).plus(currentCarbonIntensity)
+                    var lowestWindow = currentCarbonList.average()
                     var estimatedDelayBlock = 0
-                    var lowestWindow = 0.0
+
                     for (i in 0 until forecast.size - taskDurationInMinutes / 4 - 1) {
                         val range = forecast.copyOfRange(i, i + taskDurationInMinutes / 4)
                         val currentWindow = range.average()
-                        if (lowestWindow == 0.0) {
-                            estimatedDelayBlock = 1
+                        if (currentWindow < lowestWindow) {
                             lowestWindow = currentWindow
-                            continue
-                        }
-                        else {
-                            if (currentWindow < lowestWindow) {
-                                lowestWindow = currentWindow
-                                estimatedDelayBlock = i + 1
-                            }
+                            estimatedDelayBlock = i + 1
                         }
                     }
+
                     val estimatedDelayTimeInMinutes = estimatedDelayBlock * 15
-                    val estimatedDelayTimeInDuration = estimatedDelayTimeInMinutes.minutes
-                    val estimatedExecutionTime = currentTime.plus(estimatedDelayTimeInDuration.toJavaDuration())
-                    task.scheduledTime = estimatedExecutionTime
-                    task.preScheduled = true
-                    continue
+                    if (estimatedDelayTimeInMinutes > 0) {
+                        val estimatedDelayTimeInDuration = estimatedDelayTimeInMinutes.minutes
+                        val estimatedExecutionTime = currentTime.plus(estimatedDelayTimeInDuration.toJavaDuration())
+                        task.scheduledTime = estimatedExecutionTime
+                        task.preScheduled = true
+                        continue
+                    }
                 }
             }
 
