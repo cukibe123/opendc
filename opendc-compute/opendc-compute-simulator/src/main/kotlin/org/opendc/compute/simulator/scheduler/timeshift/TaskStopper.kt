@@ -37,7 +37,7 @@ public class TaskStopper(
     private val clock: InstantSource,
     context: CoroutineContext,
     private val forecast: Boolean = true,
-    private val forecastThreshold: Double = 0.6,
+    private val forecastThreshold: Double = 0.5,
     private val forecastSize: Int = 24,
     private val windowSize: Int = 168,
 ) : CarbonReceiver {
@@ -50,6 +50,8 @@ public class TaskStopper(
 
     private var service: ComputeService? = null
     private var client: ComputeService.ComputeClient? = null
+
+    private var currentThreshold: Double? = null
 
     public fun setService(service: ComputeService) {
         this.service = service
@@ -66,10 +68,14 @@ public class TaskStopper(
                     it.virtualMachine!!.snapshot
                 }
             val tasks = guests.map { it.task }
-            host.pauseAllTasks()
+
+//            host.pauseAllTasks()
+            host.pausePartially()
 
             for ((task, snapshot) in tasks.zip(snapshots)) {
-                client!!.rescheduleTask(task, snapshot)
+                if (task.pausable && task.pauseStatus) {
+                    client!!.rescheduleTask(task, snapshot)
+                }
             }
         }
     }
@@ -81,8 +87,13 @@ public class TaskStopper(
             val forecast = carbonModel!!.getForecast(forecastSize)
 
             val localForecastSize = forecast.size
+
+            //forecastThreshold is 0.5
             val quantileIndex = (localForecastSize * forecastThreshold).roundToInt()
+
             val thresholdCarbonIntensity = forecast.sorted()[quantileIndex]
+
+            currentThreshold = thresholdCarbonIntensity
 
             isHighCarbon = newCarbonIntensity > thresholdCarbonIntensity
         }
