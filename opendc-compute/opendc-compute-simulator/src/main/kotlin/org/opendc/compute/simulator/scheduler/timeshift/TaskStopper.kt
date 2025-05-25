@@ -99,7 +99,7 @@ public class TaskStopper(
             this.lowerCarbonIntensityThreshold = forecast.sorted()[(localForecastSize * 0.4).roundToInt()]
             this.upperCarbonIntensityThreshold = thresholdCarbonIntensity
 
-            isHighCarbon = newCarbonIntensity > upperCarbonIntensityThreshold
+            isHighCarbon = newCarbonIntensity > this.upperCarbonIntensityThreshold
         }
 
         if (isHighCarbon) {
