@@ -75,7 +75,6 @@ public class DTScheduler(
                         continue
                     }
                     //If the deadline is not allowed, we must proceed
-                    //Must update the pauseStatus if the task continues
                     //Add one more variable to control the interrupts
                     //Add threshold for interrupts
                     task.pausable = false
@@ -98,19 +97,6 @@ public class DTScheduler(
             }
 
             val filteredHosts = hosts.filter { host -> filters.all { filter -> filter.test(host, task) } }
-
-            /**
-             * At this part, we consider if the targeted task is paused or not
-             * If it is paused, we consider the carbon upperbound at the time it was paused
-             * If the current carbon intensity is lower than the lowerbound, then we are good to schedule
-             * Otherwise, we wait further
-             * If the deadline allows, we proceed to the stage of delaying. If not, we must schedule tasks right now
-             */
-
-            /**
-             * If tasks can be scheduled right now, we must update the state of ServiceTask, changing the lowerbound
-             * carbon to null
-             */
 
             val subset =
                 if (weighers.isNotEmpty()) {
