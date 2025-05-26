@@ -35,14 +35,14 @@ import java.time.InstantSource
 
 class WaitAWhileSchedulerTest {
     @Test
-    fun testExpectedScheduledTime() {
+    fun testBasicScheduledTime() {
         val clock = mockk<InstantSource>()
         every { clock.instant() } returns Instant.ofEpochMilli(10)
 
         //15-minute interval
         //Test with 15 because it depends on the given carbon traces
         val forecast: DoubleArray = doubleArrayOf(
-            200.0, 200.0, 200.0, 200.0, 100.0, 100.0, 100.0, 100.0)
+            200.0, 200.0, 200.0, 200.0, 50.0, 100.0, 100.0, 100.0)
         val scheduler =
             WaitAWhileScheduler(
                 filters = emptyList(),
@@ -59,7 +59,7 @@ class WaitAWhileSchedulerTest {
         every { req.task.flavor.memorySize } returns 1024
         every { req.isCancelled } returns false
         every { req.task.nature } returns TaskNature(true)
-        every { req.task.duration } returns Duration.ofMillis(1800000)
+        every { req.task.duration } returns Duration.ofMillis(900000)
         every { req.task.deadline } returns 8100000
         every { req.task.preScheduled } returns false
 
@@ -70,7 +70,7 @@ class WaitAWhileSchedulerTest {
     }
 
     @Test
-    fun testExecuteNow() { //Now is the best time
+    fun testNowIsTheBestTime() { //Now is the best time
         val clock = mockk<InstantSource>()
         every { clock.instant() } returns Instant.ofEpochMilli(10)
 
@@ -105,11 +105,12 @@ class WaitAWhileSchedulerTest {
     }
 
     @Test
-    fun testNextBlockIsTheBest() { //Now is the best time
+    fun testNextBlockIsTheBest() { //Next time window is the best time
         val clock = mockk<InstantSource>()
         every { clock.instant() } returns Instant.ofEpochMilli(10)
+
         //15-minute interval
-        //Test with 15 because it depends on the given carbon traces
+        //Test with 15 because it depends on the given carbon trace
         val forecast: DoubleArray = doubleArrayOf(
             50.0, 50.0, 100.0, 100.0, 200.0, 200.0, 200.0, 200.0)
         val scheduler =
