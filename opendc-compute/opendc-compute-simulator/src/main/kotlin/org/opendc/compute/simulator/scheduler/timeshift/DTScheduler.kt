@@ -69,29 +69,38 @@ public class DTScheduler(
             val estimatedCompletion = currentTime.plus(task.duration)
             val deadline = Instant.ofEpochMilli(task.deadline)
 
-            if (task.pauseStatus == true && task.pausable == true) {
-                if (lowerThreshold < currentCarbonIntensity) {
+            if (task.isExecuted && task.isPaused && task.isPausable) {
+                // If the current carbon intensity is higher, we check
+                // If it is lower than the lower bound, then we are good to go
+                if (task.lowerCarbonThreshold < currentCarbonIntensity) {
                     if (estimatedCompletion.isBefore(deadline)) {
                         continue
                     }
                     //If the deadline is not allowed, we must proceed
-                    //Add one more variable to control the interrupts
-                    //Add threshold for interrupts
-                    task.pausable = false
+                    task.setPausable(false)
                 }
             }
-            else if (task.pausable == false) {}
-            else {
+            else if (!task.isExecuted) {
                 if (task.nature.deferrable) {
-                    if (upperThreshold < currentCarbonIntensity) {
+                    if (lowerThreshold < currentCarbonIntensity) {
                         if (estimatedCompletion.isBefore(deadline)) {
                             // No need to schedule this task in a high carbon intensity period
                             continue
                         }
-                        task.pausable = false
+                        task.setPausable(false)
+                    }
+                    else {
+                        task.lowerCarbonThreshold = lowerThreshold
+                        task.upperCarbonThreshold = upperThreshold
                     }
                 }
+                else {
+                    task.setPausable(false)
+                }
             }
+
+            task.setExecuted(true)
+            task.setPauseStatus(false)
 
             val filteredHosts = hosts.filter { host -> filters.all { filter -> filter.test(host, task) } }
 

@@ -59,7 +59,7 @@ public class TaskStopper(
         this.client = service.newClient()
     }
 
-    private fun pauseTasks() {
+    private fun pauseTasks(currentCarbonIntensity: Double) {
         for (host in service!!.hosts) {
             val guests = host.getGuests()
 
@@ -74,10 +74,10 @@ public class TaskStopper(
             /**
              * All tasks would be switched to PAUSED at this point
              */
-            host.pausePartially()
+            host.pausePartially(currentCarbonIntensity)
 
             for ((task, snapshot) in tasks.zip(snapshots)) {
-                if (task.pausable) {
+                if (task.isPausable && task.isPaused) {
                     client!!.rescheduleTask(task, snapshot)
                 }
             }
@@ -92,19 +92,21 @@ public class TaskStopper(
 
             val localForecastSize = forecast.size
 
-            //forecastThreshold is set at 0.8
+            //forecastThreshold is set at 0.6
             val quantileIndex = (localForecastSize * forecastThreshold).roundToInt()
             val thresholdCarbonIntensity = forecast.sorted()[quantileIndex]
 
             this.lowerCarbonIntensityThreshold = forecast.sorted()[(localForecastSize * 0.4).roundToInt()]
             this.upperCarbonIntensityThreshold = thresholdCarbonIntensity
+//           isHighCarbon = newCarbonIntensity > this.upperCarbonIntensityThreshold
 
-            isHighCarbon = newCarbonIntensity > this.upperCarbonIntensityThreshold
+            //isHighCarbon is set as true so we the task stopper can always check when to stop tasks
+            isHighCarbon = true
         }
 
         if (isHighCarbon) {
             scope.launch {
-                pauseTasks()
+                pauseTasks(newCarbonIntensity)
             }
         }
     }

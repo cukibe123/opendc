@@ -70,22 +70,28 @@ public class ServiceTask {
     private int numPauses = 0;
 
     //pauseStatus remembers if this task is currently paused or no
-    private boolean pauseStatus = false;
+    private boolean isPaused = false;
 
     //pauseable remembers if this task should be paused or no
-    private boolean pausable;
+    private boolean isPausable;
+
+    private boolean isExecuted = false;
+
+    private double upperCarbonThreshold = 0.0;
+
+    private double lowerCarbonThreshold = 0.0;
 
 
     ServiceTask(
-            ComputeService service,
-            UUID uid,
-            String name,
-            TaskNature nature,
-            Duration duration,
-            Long deadline,
-            ServiceFlavor flavor,
-            Workload workload,
-            Map<String, ?> meta) {
+        ComputeService service,
+        UUID uid,
+        String name,
+        TaskNature nature,
+        Duration duration,
+        Long deadline,
+        ServiceFlavor flavor,
+        Workload workload,
+        Map<String, ?> meta) {
         this.service = service;
         this.uid = uid;
         this.name = name;
@@ -96,19 +102,32 @@ public class ServiceTask {
         this.workload = workload;
         this.meta = meta;
         //Pausable if it is deferrable
-        this.pausable = nature.deferrable;
+        this.isPausable = nature.deferrable;
 
         this.submittedAt = this.service.getClock().instant();
     }
 
-    @NotNull
-    public boolean getPauseStatus() { return pauseStatus; }
+    public boolean getIsPaused() { return isPaused; }
 
-    public boolean getPausable() { return pausable; }
+    public boolean getIsPausable() { return isPausable; }
 
-    public void setPausable(boolean status) { this.pausable = status; }
+    public boolean getIsExecuted() { return isExecuted; }
 
-    public void setPauseStatus(boolean status) { this.pauseStatus = status; }
+    public double getUpperCarbonThreshold() { return upperCarbonThreshold; }
+
+    public double getLowerCarbonThreshold() { return lowerCarbonThreshold; }
+
+    public void setPausable(boolean status) { this.isPausable = status; }
+
+    public void setPauseStatus(boolean status) { this.isPaused = status; }
+
+    public void setUpperCarbonThreshold(double carbonIntensity) { this.upperCarbonThreshold = carbonIntensity; }
+
+    public void setLowerCarbonThreshold(double carbonIntensity) { this.lowerCarbonThreshold = carbonIntensity; }
+
+    public void setExecuted(boolean status) { this.isExecuted = status; }
+
+
     @NotNull
     public UUID getUid() {
         return uid;
