@@ -93,6 +93,8 @@ public interface Timeshifter : CarbonReceiver {
         shortLowCarbon = (newCarbonIntensity < thresholdCarbonIntensity) &&
             (newCarbonIntensity > previousCarbonIntensity)
         longLowCarbon = (newCarbonIntensity < thresholdCarbonIntensity)
+        currentCarbonIntensity = newCarbonIntensity
+        currentThreshold = pastCarbonIntensities.sorted()[(pastCarbonIntensities.size * 0.4).roundToInt()]
     }
 
     override fun setCarbonModel(carbonModel: CarbonModel?) {
