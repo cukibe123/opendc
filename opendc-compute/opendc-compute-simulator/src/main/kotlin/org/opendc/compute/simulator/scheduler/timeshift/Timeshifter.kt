@@ -68,7 +68,7 @@ public interface Timeshifter : CarbonReceiver {
         longLowCarbon = newCarbonIntensity < longCarbonIntensity
 
         currentCarbonIntensity = newCarbonIntensity
-        currentThreshold = forecast.sorted()[(localForecastSize * 0.5).roundToInt()]
+        currentThreshold = forecast.sorted()[(localForecastSize * 0.4).roundToInt()]
     }
 
     /**

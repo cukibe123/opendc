@@ -157,10 +157,10 @@ public class SimHost(
         }
     }
 
-    public fun pausePartially() {
+    public fun pausePartially(currentIntensity: Double) {
         for (guest in guests) {
-            if (guest.task.pausable) {
-                guest.task.pauseStatus = true
+            if (guest.task.isPausable && (currentIntensity > guest.task.carbonThreshold)) {
+                guest.task.setPauseStatus(true)
                 guest.pause()
                 this.delete(guest.task)
             }

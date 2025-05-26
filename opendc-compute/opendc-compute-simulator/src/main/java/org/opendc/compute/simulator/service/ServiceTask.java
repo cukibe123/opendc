@@ -69,27 +69,39 @@ public class ServiceTask {
     private int numFailures = 0;
     private int numPauses = 0;
 
-    private boolean pauseStatus = false;
+    private boolean isPaused = false;
 
-    private boolean pausable = true;
+    private boolean isExecuted = false;
 
-    public boolean getPauseStatus() { return pauseStatus; }
-    public boolean getPausable() { return pausable; }
+    private boolean isPausable = true;
 
-    public void setPauseStatus(boolean status) { pauseStatus = status; }
+    private double carbonThreshold = 0.0;
 
-    public void setPausable(boolean status) { pausable = status; }
+    public boolean isPaused() { return isPaused; }
+
+    public boolean isExecuted() { return isExecuted; }
+    public boolean isPausable() { return isPausable; }
+
+    public double getCarbonThreshold() { return carbonThreshold; }
+
+    public void setPauseStatus(boolean status) { isPaused = status; }
+
+    public void setPausable(boolean status) { isPausable = status; }
+
+    public void setExecuted(boolean status) { isExecuted = status; }
+
+    public void setCarbonThreshold(double carbonIntensity) { carbonThreshold = carbonIntensity; }
 
     ServiceTask(
-            ComputeService service,
-            UUID uid,
-            String name,
-            TaskNature nature,
-            Duration duration,
-            Long deadline,
-            ServiceFlavor flavor,
-            Workload workload,
-            Map<String, ?> meta) {
+        ComputeService service,
+        UUID uid,
+        String name,
+        TaskNature nature,
+        Duration duration,
+        Long deadline,
+        ServiceFlavor flavor,
+        Workload workload,
+        Map<String, ?> meta) {
         this.service = service;
         this.uid = uid;
         this.name = name;

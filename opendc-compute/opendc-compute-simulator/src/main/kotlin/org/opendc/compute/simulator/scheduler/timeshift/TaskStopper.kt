@@ -58,7 +58,7 @@ public class TaskStopper(
         this.client = service.newClient()
     }
 
-    private fun pauseTasks() {
+    private fun pauseTasks(currentIntensity: Double) {
         for (host in service!!.hosts) {
             val guests = host.getGuests()
 
@@ -70,10 +70,10 @@ public class TaskStopper(
             val tasks = guests.map { it.task }
 
 //            host.pauseAllTasks()
-            host.pausePartially()
+            host.pausePartially(currentIntensity)
 
             for ((task, snapshot) in tasks.zip(snapshots)) {
-                if (task.pausable && task.pauseStatus) {
+                if (task.isPausable && task.isPaused) {
                     client!!.rescheduleTask(task, snapshot)
                 }
             }
@@ -95,12 +95,13 @@ public class TaskStopper(
 
             currentThreshold = thresholdCarbonIntensity
 
-            isHighCarbon = newCarbonIntensity > thresholdCarbonIntensity
+//            isHighCarbon = newCarbonIntensity > thresholdCarbonIntensity
+            isHighCarbon = true
         }
 
         if (isHighCarbon) {
             scope.launch {
-                pauseTasks()
+                pauseTasks(newCarbonIntensity)
             }
         }
     }

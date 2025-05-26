@@ -64,35 +64,46 @@ public class STScheduler(
 
             val task = request.task
 
-            if (task.pauseStatus == true && task.pausable == true) {
-                if (currentThreshold < currentCarbonIntensity) {
-                    val currentTime = clock.instant()
-                    val estimatedCompletion = currentTime.plus(task.duration)
-                    val deadline = Instant.ofEpochMilli(task.deadline)
+            val currentTime = clock.instant()
+            val estimatedCompletion = currentTime.plus(task.duration)
+            val deadline = Instant.ofEpochMilli(task.deadline)
+
+            if (task.isExecuted && task.isPaused && task.isPausable) {
+                if (task.carbonThreshold < currentCarbonIntensity) {
                     if (estimatedCompletion.isBefore(deadline)) {
                         continue
                     }
-                    //If the deadline is not allowed, we must proceed
-                    //Add one more variable to control the interrupts
-                    //Add threshold for interrupts
-                    task.pausable = false
+                    //If the deadline does not allow, then we execute now
+                    //pausable assigned to false so the task cannot be interrupted
+                    task.isPausable = false
+                    task.carbonThreshold = currentThreshold
                 }
             }
-            else if (task.pausable == false) {}
-            else {
+            else if (!task.isExecuted) {
                 if (task.nature.deferrable) {
                     if (currentThreshold < currentCarbonIntensity) {
-                        val currentTime = clock.instant()
-                        val estimatedCompletion = currentTime.plus(task.duration)
-                        val deadline = Instant.ofEpochMilli(task.deadline)
                         if (estimatedCompletion.isBefore(deadline)) {
-                            // No need to schedule this task in a high carbon intensity period
                             continue
                         }
-                        task.pausable = false
+                        //If the deadline does not allow, then we execute now
+                        //pausable assigned to false so the task cannot be interrupted
+                        task.isPausable = false
+                        task.carbonThreshold = currentThreshold
+                    }
+                    else {
+                        //Assign carbonThreshold to the current task
+                        task.carbonThreshold = currentThreshold
                     }
                 }
+                else {
+                    //If tasks are not deferrable, then we cannot pause it also
+                    task.isPausable = false
+                    task.carbonThreshold = currentThreshold
+                }
             }
+
+            task.isExecuted = true
+            task.setPauseStatus(false)
 
             val filteredHosts = hosts.filter { host -> filters.all { filter -> filter.test(host, task) } }
 
