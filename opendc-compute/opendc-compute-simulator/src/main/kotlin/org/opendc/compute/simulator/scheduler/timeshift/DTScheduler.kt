@@ -65,12 +65,12 @@ public class DTScheduler(
 
             val task = request.task
 
+            val currentTime = clock.instant()
+            val estimatedCompletion = currentTime.plus(task.duration)
+            val deadline = Instant.ofEpochMilli(task.deadline)
 
             if (task.pauseStatus == true && task.pausable == true) {
                 if (lowerThreshold < currentCarbonIntensity) {
-                    val currentTime = clock.instant()
-                    val estimatedCompletion = currentTime.plus(task.duration)
-                    val deadline = Instant.ofEpochMilli(task.deadline)
                     if (estimatedCompletion.isBefore(deadline)) {
                         continue
                     }
@@ -84,9 +84,6 @@ public class DTScheduler(
             else {
                 if (task.nature.deferrable) {
                     if (upperThreshold < currentCarbonIntensity) {
-                        val currentTime = clock.instant()
-                        val estimatedCompletion = currentTime.plus(task.duration)
-                        val deadline = Instant.ofEpochMilli(task.deadline)
                         if (estimatedCompletion.isBefore(deadline)) {
                             // No need to schedule this task in a high carbon intensity period
                             continue
