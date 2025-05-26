@@ -37,7 +37,7 @@ public class TaskStopper(
     private val clock: InstantSource,
     context: CoroutineContext,
     private val forecast: Boolean = true,
-    private val forecastThreshold: Double = 0.5,
+    private val forecastThreshold: Double = 0.4,
     private val forecastSize: Int = 24,
     private val windowSize: Int = 168,
 ) : CarbonReceiver {
@@ -88,7 +88,6 @@ public class TaskStopper(
 
             val localForecastSize = forecast.size
 
-            //forecastThreshold is 0.5
             val quantileIndex = (localForecastSize * forecastThreshold).roundToInt()
 
             val thresholdCarbonIntensity = forecast.sorted()[quantileIndex]

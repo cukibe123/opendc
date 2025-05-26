@@ -73,7 +73,7 @@ public class ServiceTask {
 
     private boolean isExecuted = false;
 
-    private boolean isPausable = true;
+    private boolean isPausable;
 
     private double carbonThreshold = 0.0;
 
@@ -111,7 +111,7 @@ public class ServiceTask {
         this.flavor = flavor;
         this.workload = workload;
         this.meta = meta;
-
+        this.isPausable = nature.deferrable;
         this.submittedAt = this.service.getClock().instant();
     }
 

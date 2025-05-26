@@ -76,7 +76,6 @@ public class STScheduler(
                     //If the deadline does not allow, then we execute now
                     //pausable assigned to false so the task cannot be interrupted
                     task.isPausable = false
-                    task.carbonThreshold = currentThreshold
                 }
             }
             else if (!task.isExecuted) {
@@ -88,17 +87,11 @@ public class STScheduler(
                         //If the deadline does not allow, then we execute now
                         //pausable assigned to false so the task cannot be interrupted
                         task.isPausable = false
-                        task.carbonThreshold = currentThreshold
                     }
                     else {
                         //Assign carbonThreshold to the current task
                         task.carbonThreshold = currentThreshold
                     }
-                }
-                else {
-                    //If tasks are not deferrable, then we cannot pause it also
-                    task.isPausable = false
-                    task.carbonThreshold = currentThreshold
                 }
             }
 
