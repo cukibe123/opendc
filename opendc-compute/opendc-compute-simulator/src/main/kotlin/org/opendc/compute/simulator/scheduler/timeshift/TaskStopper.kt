@@ -116,15 +116,13 @@ public class TaskStopper(
             this.carbonRunningSum -= this.pastCarbonIntensities.removeFirst()
         }
 
-        //val thresholdCarbonIntensity = this.carbonRunningSum / this.pastCarbonIntensities.size
-
         /**
         In case of no forecast, we just care about the current threshold intensity
         If it is higher than the average of previous window size, then we stop the task
         The lowerbound is defined by 90% of the current threshold intensity
          */
 
-        val upperQuantileIndex = (this.pastCarbonIntensities.size * 0.8).roundToInt()
+        val upperQuantileIndex = (this.pastCarbonIntensities.size * 0.6).roundToInt()
         val lowerQuantileIndex = (this.pastCarbonIntensities.size * 0.4).roundToInt()
 
         val thresholdCarbonIntensity = pastCarbonIntensities.sorted()[upperQuantileIndex]

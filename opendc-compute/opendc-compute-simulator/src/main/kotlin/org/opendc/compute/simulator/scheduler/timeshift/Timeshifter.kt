@@ -47,6 +47,8 @@ public interface Timeshifter : CarbonReceiver {
     public var upperThreshold: Double
 
 
+
+
     /**
      Compare current carbon intensity to the chosen quantile from the [forecastSize]
      number of intensity forecasts
@@ -92,9 +94,13 @@ public interface Timeshifter : CarbonReceiver {
 
         val thresholdCarbonIntensity = this.carbonRunningSum / this.pastCarbonIntensities.size
 
+        upperThreshold = this.pastCarbonIntensities.sorted()[(this.pastCarbonIntensities.size * 0.6).roundToInt()]
+        lowerThreshold = this.pastCarbonIntensities.sorted()[(this.pastCarbonIntensities.size * 0.4).roundToInt()]
+
         shortLowCarbon = (newCarbonIntensity < thresholdCarbonIntensity) &&
             (newCarbonIntensity > previousCarbonIntensity)
         longLowCarbon = (newCarbonIntensity < thresholdCarbonIntensity)
+
     }
 
     override fun setCarbonModel(carbonModel: CarbonModel?) {
