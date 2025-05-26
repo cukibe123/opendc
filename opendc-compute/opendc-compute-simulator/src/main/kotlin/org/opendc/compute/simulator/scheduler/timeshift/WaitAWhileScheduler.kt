@@ -83,9 +83,8 @@ public class WaitAWhileScheduler(
 
                 var forecast: DoubleArray? = null
                 if (timeToDeadlineInMinutes.toInt() > 0) {
-                    forecast = carbonMod!!.getForecast(timeToDeadlineInMinutes.toInt() / 4)
+                    forecast = carbonMod!!.getForecast(timeToDeadlineInMinutes.toInt() / 15)
                 }
-
                 //Implement logic for choosing best time window here
                 if (forecast != null && taskDurationInMinutes < timeToDeadlineInMinutes) {
                     val scheduledTime = findBestWindow(task, forecast, taskDurationInMinutes)
@@ -93,6 +92,9 @@ public class WaitAWhileScheduler(
                         task.preScheduled = true
                         task.scheduledTime = scheduledTime
                         continue
+                    }
+                    else {
+                        //Execute right now is the best
                     }
                 }
             }
@@ -142,7 +144,6 @@ public class WaitAWhileScheduler(
             }
         }
         if (result == null) return SchedulingResult(SchedulingResultType.EMPTY)
-
         return result
     }
 
