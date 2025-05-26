@@ -69,6 +69,7 @@ public interface Timeshifter : CarbonReceiver {
 
         lowerThreshold = forecast.sorted()[(forecastSize * 0.4).roundToInt()]
         upperThreshold = forecast.sorted()[(forecastSize * 0.8).roundToInt()]
+        this.currentCarbonIntensity = newCarbonIntensity
     }
 
     /**
@@ -93,6 +94,7 @@ public interface Timeshifter : CarbonReceiver {
         shortLowCarbon = (newCarbonIntensity < thresholdCarbonIntensity) &&
             (newCarbonIntensity > previousCarbonIntensity)
         longLowCarbon = (newCarbonIntensity < thresholdCarbonIntensity)
+        this.currentCarbonIntensity = newCarbonIntensity
     }
 
     override fun setCarbonModel(carbonModel: CarbonModel?) {
