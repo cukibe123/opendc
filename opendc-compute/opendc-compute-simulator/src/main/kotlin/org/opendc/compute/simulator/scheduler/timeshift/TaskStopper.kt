@@ -51,8 +51,8 @@ public class TaskStopper(
     private var service: ComputeService? = null
     private var client: ComputeService.ComputeClient? = null
 
-    private var lowerCarbonIntensityThreshold : Double = 0.0
-    private var upperCarbonIntensityThreshold : Double = 0.0
+    private var lowerCarbonIntensityThreshold: Double = 0.0
+    private var upperCarbonIntensityThreshold: Double = 0.0
 
     public fun setService(service: ComputeService) {
         this.service = service
@@ -69,7 +69,6 @@ public class TaskStopper(
                     it.virtualMachine!!.snapshot
                 }
             val tasks = guests.map { it.task }
-
 
             /**
              * All tasks would be switched to PAUSED at this point
@@ -98,17 +97,14 @@ public class TaskStopper(
 
             this.lowerCarbonIntensityThreshold = forecast.sorted()[(localForecastSize * 0.4).roundToInt()]
             this.upperCarbonIntensityThreshold = thresholdCarbonIntensity
-//           isHighCarbon = newCarbonIntensity > this.upperCarbonIntensityThreshold
+            isHighCarbon = newCarbonIntensity > this.upperCarbonIntensityThreshold
 
-            //isHighCarbon is set as true so we the task stopper can always check when to stop tasks
-            isHighCarbon = true
         }
 
-        if (isHighCarbon) {
-            scope.launch {
-                pauseTasks(newCarbonIntensity)
-            }
+        scope.launch {
+            pauseTasks(newCarbonIntensity)
         }
+
     }
 
     private fun noForecastUpdateCarbonIntensity(newCarbonIntensity: Double): Boolean {
