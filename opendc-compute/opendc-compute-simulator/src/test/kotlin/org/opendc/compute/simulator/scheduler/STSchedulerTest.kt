@@ -26,12 +26,18 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.opendc.compute.simulator.host.SimHost
+import org.opendc.compute.simulator.internal.Guest
 import org.opendc.compute.simulator.scheduler.timeshift.STScheduler
+import org.opendc.compute.simulator.scheduler.timeshift.TaskStopper
 import org.opendc.compute.simulator.scheduler.timeshift.TimeshiftScheduler
+import org.opendc.compute.simulator.service.ComputeService
+import org.opendc.compute.simulator.service.ServiceTask
 import org.opendc.compute.simulator.service.TaskNature
 import java.time.Duration
 import java.time.Instant
 import java.time.InstantSource
+import kotlin.coroutines.coroutineContext
 
 class STSchedulerTest {
     @Test
@@ -78,14 +84,11 @@ class STSchedulerTest {
     fun testRespectDeadline() {
         val clock = mockk<InstantSource>()
         every { clock.instant() } returns Instant.ofEpochMilli(10)
-
-
-
         val scheduler =
             TimeshiftScheduler(
                 filters = emptyList(),
                 weighers = emptyList(),
-                windowSize = 2,
+                windowSize = 10,
                 clock = clock,
                 forecast = false,
             )
@@ -114,6 +117,96 @@ class STSchedulerTest {
         scheduler.updateCarbonIntensity(190.0)
 
         // The scheduler tries to schedule the task, but fails as there are no hosts.
+        // It should be allocated if there is any actual host
         assertEquals(SchedulingResultType.FAILURE, scheduler.select(mutableListOf(req).iterator()).resultType)
+    }
+
+    @Test
+    fun testInterruptionIfCarbonIsHigh() {
+        val service = mockk<ServiceTask>()
+        val host = mockk<SimHost>()
+        val guest = mockk<Guest>()
+
+        var result = false
+
+        every { service.carbonThreshold } returns 100.0
+        every { service.isPausable } returns true
+
+        every { host.getGuests() } returns listOf(guest)
+        every { guest.task } returns service
+
+        //The logic of this function is the same as the one we use in the actual algorithm
+        every { host.pausePartially(any()) } answers {
+            val iterator = host.getGuests().iterator()
+            while (iterator.hasNext()) {
+                val guest = iterator.next()
+                if (guest.task.isPausable && (guest.task.carbonThreshold < firstArg<Double>())) {
+                    result = true
+                }
+            }
+        }
+
+        host.pausePartially(200.0)
+        assertEquals(true, result)
+    }
+
+    @Test
+    fun testNotInterruptionIfTaskIsNotPausable() {
+        val service = mockk<ServiceTask>()
+        val host = mockk<SimHost>()
+        val guest = mockk<Guest>()
+
+        var result = false
+
+        every { service.carbonThreshold } returns 100.0
+        //Task is not pausable
+        every { service.isPausable } returns false
+
+        every { host.getGuests() } returns listOf(guest)
+        every { guest.task } returns service
+
+        //The logic of this function is the same as the one we use in the actual algorithm
+        every { host.pausePartially(any()) } answers {
+            val iterator = host.getGuests().iterator()
+            while (iterator.hasNext()) {
+                val guest = iterator.next()
+                if (guest.task.isPausable && (guest.task.carbonThreshold < firstArg<Double>())) {
+                    result = true
+                }
+            }
+        }
+
+        host.pausePartially(200.0)
+        assertEquals(false, result)
+    }
+
+    @Test
+    fun testNotInterruptionWhenCarbonIsLow() {
+        val service = mockk<ServiceTask>()
+        val host = mockk<SimHost>()
+        val guest = mockk<Guest>()
+
+        var result = false
+
+        every { service.carbonThreshold } returns 100.0
+        //Task is not pausable
+        every { service.isPausable } returns true
+
+        every { host.getGuests() } returns listOf(guest)
+        every { guest.task } returns service
+
+        //The logic of this function is the same as the one we use in the actual algorithm
+        every { host.pausePartially(any()) } answers {
+            val iterator = host.getGuests().iterator()
+            while (iterator.hasNext()) {
+                val guest = iterator.next()
+                if (guest.task.isPausable && (guest.task.carbonThreshold < firstArg<Double>())) {
+                    result = true
+                }
+            }
+        }
+
+        host.pausePartially(20.0)
+        assertEquals(false, result)
     }
 }
