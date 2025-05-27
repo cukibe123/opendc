@@ -43,8 +43,6 @@ public interface Timeshifter : CarbonReceiver {
     public var carbonMod: CarbonModel?
 
     public var currentCarbonIntensity: Double
-    public var lowerThreshold: Double
-    public var upperThreshold: Double
 
     /**
      Compare current carbon intensity to the chosen quantile from the [forecastSize]
@@ -67,8 +65,6 @@ public interface Timeshifter : CarbonReceiver {
         shortLowCarbon = newCarbonIntensity < shortCarbonIntensity
         longLowCarbon = newCarbonIntensity < longCarbonIntensity
 
-        lowerThreshold = forecast.sorted()[(forecastSize * 0.4).roundToInt()]
-        upperThreshold = forecast.sorted()[(forecastSize * 0.8).roundToInt()]
         this.currentCarbonIntensity = newCarbonIntensity
     }
 

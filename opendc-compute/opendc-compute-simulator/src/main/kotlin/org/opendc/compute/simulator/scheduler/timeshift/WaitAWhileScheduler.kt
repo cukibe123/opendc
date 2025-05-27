@@ -46,8 +46,6 @@ public class WaitAWhileScheduler(
     My newly added variable for carbon tracing
      */
     override var currentCarbonIntensity: Double = 0.0
-    override var lowerThreshold: Double = 0.0
-    override var upperThreshold: Double = 0.0
 
     private val hosts = mutableListOf<HostView>()
 
