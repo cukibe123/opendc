@@ -85,23 +85,19 @@ public class TaskStopper(
             isHighCarbon = noForecastUpdateCarbonIntensity(newCarbonIntensity)
         } else {
             val forecast = carbonModel!!.getForecast(forecastSize)
-
             val localForecastSize = forecast.size
 
+            //forecastThreshold can be defined in the json file
             val quantileIndex = (localForecastSize * forecastThreshold).roundToInt()
-
             val thresholdCarbonIntensity = forecast.sorted()[quantileIndex]
 
             currentThreshold = thresholdCarbonIntensity
 
-//            isHighCarbon = newCarbonIntensity > thresholdCarbonIntensity
-            isHighCarbon = true
+            isHighCarbon = newCarbonIntensity > thresholdCarbonIntensity
         }
-
-        if (isHighCarbon) {
-            scope.launch {
+        //We call the pauseTasks every time
+        scope.launch {
                 pauseTasks(newCarbonIntensity)
-            }
         }
     }
 
