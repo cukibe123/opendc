@@ -93,8 +93,9 @@ public interface Timeshifter : CarbonReceiver {
         val thresholdCarbonIntensity = this.carbonRunningSum / this.pastCarbonIntensities.size
 
         //Threshold values are set at fixed
-        upperThreshold = this.pastCarbonIntensities.sorted()[(this.pastCarbonIntensities.size * 0.6).roundToInt()]
-        lowerThreshold = this.pastCarbonIntensities.sorted()[(this.pastCarbonIntensities.size * 0.4).roundToInt()]
+        upperThreshold = this.pastCarbonIntensities.sorted()[(this.pastCarbonIntensities.size * 0.6).toInt()]
+        lowerThreshold = this.pastCarbonIntensities.sorted()[(this.pastCarbonIntensities.size * 0.4).toInt()]
+        currentCarbonIntensity = newCarbonIntensity
 
         shortLowCarbon = (newCarbonIntensity < thresholdCarbonIntensity) &&
             (newCarbonIntensity > previousCarbonIntensity)
