@@ -40,6 +40,58 @@ import java.time.InstantSource
 import kotlin.coroutines.coroutineContext
 
 class STSchedulerTest {
+
+    @Test
+    fun testBasicScheduling() {
+        val clock = mockk<InstantSource>()
+        every { clock.instant() } returns Instant.ofEpochMilli(10)
+
+        val scheduler =
+            STScheduler(
+                filters = emptyList(),
+                weighers = emptyList(),
+                windowSize = 10,
+                clock = clock,
+                forecast = false,
+            )
+
+        val req = mockk<SchedulingRequest>()
+        every { req.task.flavor.coreCount } returns 2
+        every { req.task.flavor.memorySize } returns 1024
+        every { req.isCancelled } returns false
+        every { req.task.nature } returns TaskNature(true)
+        every { req.task.duration } returns Duration.ofMillis(10)
+        every { req.task.deadline } returns 50
+
+        every { req.task.isExecuted } returns false
+        every { req.task.isPaused } returns false
+        every { req.task.isPausable } returns true
+
+        every { req.task.carbonThreshold = any() } answers {
+            firstArg<Double>()
+        }
+        every { req.task.setPauseStatus(any()) } answers {
+            firstArg<Boolean>()
+        }
+        every { req.task.isExecuted = any() } answers {
+            firstArg<Boolean>()
+        }
+
+        scheduler.updateCarbonIntensity(200.0)
+        scheduler.updateCarbonIntensity(190.0)
+        scheduler.updateCarbonIntensity(180.0)
+        scheduler.updateCarbonIntensity(170.0)
+        scheduler.updateCarbonIntensity(160.0)
+        scheduler.updateCarbonIntensity(150.0)
+        scheduler.updateCarbonIntensity(140.0)
+        scheduler.updateCarbonIntensity(130.0)
+        scheduler.updateCarbonIntensity(120.0)
+        scheduler.updateCarbonIntensity(110.0)
+
+        //Returns FAILURE because the schedule tries to find a host, but there is not host generated in test
+        assertEquals(SchedulingResultType.FAILURE, scheduler.select(mutableListOf(req).iterator()).resultType)
+
+    }
     @Test
     fun testBasicDeferring() {
         val clock = mockk<InstantSource>()
@@ -77,7 +129,61 @@ class STSchedulerTest {
         scheduler.updateCarbonIntensity(180.0)
         scheduler.updateCarbonIntensity(190.0)
 
+        //Returns EMPTY because tasks are delayed
         assertEquals(SchedulingResultType.EMPTY, scheduler.select(mutableListOf(req).iterator()).resultType)
+    }
+
+    @Test
+    fun testScheduleIfTaskIsNotDeferrable() {
+        val clock = mockk<InstantSource>()
+        every { clock.instant() } returns Instant.ofEpochMilli(10)
+        val scheduler =
+            STScheduler(
+                filters = emptyList(),
+                weighers = emptyList(),
+                windowSize = 10,
+                clock = clock,
+                forecast = false,
+            )
+
+        val req = mockk<SchedulingRequest>()
+        every { req.task.flavor.coreCount } returns 2
+        every { req.task.flavor.memorySize } returns 1024
+        every { req.isCancelled } returns false
+        every { req.task.nature } returns TaskNature(false)
+        every { req.task.duration } returns Duration.ofMillis(10)
+        every { req.task.deadline } returns 50
+
+        every { req.task.isExecuted } returns false
+        every { req.task.isPaused } returns false
+        every { req.task.isPausable } returns false
+
+        every { req.task.carbonThreshold = any() } answers {
+            firstArg<Double>()
+        }
+        every { req.task.setPauseStatus(any()) } answers {
+            firstArg<Boolean>()
+        }
+        every { req.task.isExecuted = any() } answers {
+            firstArg<Boolean>()
+        }
+        every { req.task.isPausable = any() } answers {
+            firstArg<Boolean>()
+        }
+
+        scheduler.updateCarbonIntensity(100.0)
+        scheduler.updateCarbonIntensity(110.0)
+        scheduler.updateCarbonIntensity(120.0)
+        scheduler.updateCarbonIntensity(130.0)
+        scheduler.updateCarbonIntensity(140.0)
+        scheduler.updateCarbonIntensity(150.0)
+        scheduler.updateCarbonIntensity(160.0)
+        scheduler.updateCarbonIntensity(170.0)
+        scheduler.updateCarbonIntensity(180.0)
+        scheduler.updateCarbonIntensity(190.0)
+
+        //Returns FAILURE because there is no task after all
+        assertEquals(SchedulingResultType.FAILURE, scheduler.select(mutableListOf(req).iterator()).resultType)
     }
 
     @Test
@@ -85,7 +191,7 @@ class STSchedulerTest {
         val clock = mockk<InstantSource>()
         every { clock.instant() } returns Instant.ofEpochMilli(10)
         val scheduler =
-            TimeshiftScheduler(
+            STScheduler(
                 filters = emptyList(),
                 weighers = emptyList(),
                 windowSize = 10,
@@ -104,6 +210,19 @@ class STSchedulerTest {
         every { req.task.isExecuted } returns false
         every { req.task.isPaused } returns false
         every { req.task.isPausable } returns true
+
+        every { req.task.carbonThreshold = any() } answers {
+            firstArg<Double>()
+        }
+        every { req.task.setPauseStatus(any()) } answers {
+            firstArg<Boolean>()
+        }
+        every { req.task.isExecuted = any() } answers {
+            firstArg<Boolean>()
+        }
+        every { req.task.isPausable = any() } answers {
+            firstArg<Boolean>()
+        }
 
         scheduler.updateCarbonIntensity(100.0)
         scheduler.updateCarbonIntensity(110.0)
