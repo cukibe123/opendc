@@ -42,7 +42,7 @@ class WaitAWhileSchedulerTest {
         //15-minute interval
         //Test with 15 because it depends on the given carbon traces
         val forecast: DoubleArray = doubleArrayOf(
-            200.0, 200.0, 200.0, 200.0, 50.0, 100.0, 100.0, 100.0)
+            200.0, 200.0, 50.0, 100.0, 100.0, 100.0, 200.0, 200.0)
         val scheduler =
             WaitAWhileScheduler(
                 filters = emptyList(),
@@ -65,9 +65,45 @@ class WaitAWhileSchedulerTest {
 
         scheduler.updateCarbonIntensity(200.0)
 
-        val expectedScheduledTime = clock.instant().plus(Duration.ofMillis(4500000))
+        val expectedScheduledTime = clock.instant().plus(Duration.ofMillis(2700000))
         assertEquals(expectedScheduledTime, scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toMinutes().toInt()))
     }
+
+    @Test
+    fun testScheduleNowIfNonDeferrableTask() {
+        val clock = mockk<InstantSource>()
+        every { clock.instant() } returns Instant.ofEpochMilli(10)
+
+        //15-minute interval
+        //Test with 15 because it depends on the given carbon traces
+        val forecast: DoubleArray = doubleArrayOf(
+            200.0, 200.0, 50.0, 100.0, 100.0, 100.0, 200.0, 200.0)
+        val scheduler =
+            WaitAWhileScheduler(
+                filters = emptyList(),
+                weighers = emptyList(),
+                windowSize = 2,
+                forecastSize = 4,
+                clock = clock,
+                forecast = false,
+                //It does not change the behaviour
+                //Set to false so we don't have to call forecast from CarbonModel
+            )
+        val req = mockk<SchedulingRequest>()
+        every { req.task.flavor.coreCount } returns 2
+        every { req.task.flavor.memorySize } returns 1024
+        every { req.isCancelled } returns false
+        every { req.task.nature } returns TaskNature(false)
+        every { req.task.duration } returns Duration.ofMillis(900000)
+        every { req.task.deadline } returns 8100000
+        every { req.task.preScheduled } returns false
+
+        scheduler.updateCarbonIntensity(200.0)
+
+        val expectedScheduledTime = clock.instant().plus(Duration.ofMillis(0))
+        assertEquals(expectedScheduledTime, scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toMinutes().toInt()))
+    }
+
 
     @Test
     fun testNowIsTheBestTime() { //Now is the best time
@@ -136,6 +172,41 @@ class WaitAWhileSchedulerTest {
         scheduler.updateCarbonIntensity(70.0)
         val expectedTime = clock.instant().plus(Duration.ofMillis(900000))
         assertEquals(expectedTime, scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toMinutes().toInt()))
+    }
+
+    @Test
+    fun testLastWindowIsTheBestTime() {
+        val clock = mockk<InstantSource>()
+        every { clock.instant() } returns Instant.ofEpochMilli(10)
+
+        //15-minute interval
+        //Test with 15 because it depends on the given carbon traces
+        val forecast: DoubleArray = doubleArrayOf(
+            200.0, 200.0, 200.0, 200.0, 50.0, 100.0, 100.0, 100.0)
+        val scheduler =
+            WaitAWhileScheduler(
+                filters = emptyList(),
+                weighers = emptyList(),
+                windowSize = 2,
+                forecastSize = 4,
+                clock = clock,
+                forecast = false,
+                //It does not change the behaviour
+                //Set to false so we don't have to call forecast from CarbonModel
+            )
+        val req = mockk<SchedulingRequest>()
+        every { req.task.flavor.coreCount } returns 2
+        every { req.task.flavor.memorySize } returns 1024
+        every { req.isCancelled } returns false
+        every { req.task.nature } returns TaskNature(true)
+        every { req.task.duration } returns Duration.ofMillis(900000)
+        every { req.task.deadline } returns 8100000
+        every { req.task.preScheduled } returns false
+
+        scheduler.updateCarbonIntensity(200.0)
+
+        val expectedScheduledTime = clock.instant().plus(Duration.ofMillis(4500000))
+        assertEquals(expectedScheduledTime, scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toMinutes().toInt()))
     }
 
 }
