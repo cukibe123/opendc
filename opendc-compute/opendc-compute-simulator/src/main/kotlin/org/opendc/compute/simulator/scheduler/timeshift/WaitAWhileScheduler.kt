@@ -153,25 +153,27 @@ public class WaitAWhileScheduler(
 
     public fun findBestWindow(task: ServiceTask, forecast: DoubleArray, taskDurationInMinutes: Int): Instant? {
         val currentTime = clock.instant()
-
-        val currentCarbonList = forecast.copyOfRange(0, (taskDurationInMinutes / 15)).plus(currentCarbonIntensity)
-        var lowestWindow = currentCarbonList.average()
-        var estimatedDelayBlock = 0
-        for (i in 0 until forecast.size - taskDurationInMinutes / 15 - 1) {
-            val range = forecast.copyOfRange(i, i + taskDurationInMinutes / 15)
-            val currentWindow = range.average()
-            if (currentWindow < lowestWindow) {
-                lowestWindow = currentWindow
-                estimatedDelayBlock = i + 1
+        if (task.nature.deferrable) {
+            val currentCarbonList = forecast.copyOfRange(0, (taskDurationInMinutes / 15)).plus(currentCarbonIntensity)
+            var lowestWindow = currentCarbonList.average()
+            var estimatedDelayBlock = 0
+            for (i in 0 until forecast.size - taskDurationInMinutes / 15 - 1) {
+                val range = forecast.copyOfRange(i, i + taskDurationInMinutes / 15)
+                val currentWindow = range.average()
+                if (currentWindow < lowestWindow) {
+                    lowestWindow = currentWindow
+                    estimatedDelayBlock = i + 1
+                }
+            }
+            val estimatedDelayTimeInMinutes = estimatedDelayBlock * 15
+            if (estimatedDelayTimeInMinutes > 0) {
+                val estimatedDelayTimeInDuration = estimatedDelayTimeInMinutes.minutes
+                val estimatedExecutionTime = currentTime.plus(estimatedDelayTimeInDuration.toJavaDuration())
+                return estimatedExecutionTime
+            } else {
+                return currentTime
             }
         }
-        val estimatedDelayTimeInMinutes = estimatedDelayBlock * 15
-        if (estimatedDelayTimeInMinutes > 0) {
-            val estimatedDelayTimeInDuration = estimatedDelayTimeInMinutes.minutes
-            val estimatedExecutionTime = currentTime.plus(estimatedDelayTimeInDuration.toJavaDuration())
-            return estimatedExecutionTime
-        } else {
-            return currentTime
-        }
+        return currentTime
     }
 }
