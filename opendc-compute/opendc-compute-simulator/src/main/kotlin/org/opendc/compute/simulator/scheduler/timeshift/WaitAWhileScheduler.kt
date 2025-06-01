@@ -9,10 +9,12 @@ import org.opendc.compute.simulator.scheduler.filters.HostFilter
 import org.opendc.compute.simulator.scheduler.weights.HostWeigher
 import org.opendc.compute.simulator.service.HostView
 import org.opendc.compute.simulator.service.ServiceTask
+import org.opendc.compute.simulator.service.TimeSlot
 import org.opendc.simulator.compute.power.CarbonModel
 import java.time.Instant
 import java.time.InstantSource
 import java.util.LinkedList
+import java.util.Queue
 import java.util.SplittableRandom
 import java.util.random.RandomGenerator
 import kotlin.math.min
@@ -71,8 +73,12 @@ public class WaitAWhileScheduler(
 
             if (task.preScheduled) {
                 //If it is not the time, then we keep it waiting
-                if (currentTime.isBefore(task.scheduledTime)) {
+                val currentSlot = task.currentTimeSlot
+                if (currentTime.isBefore(currentSlot.startTime)) {
                     continue
+                }
+                else if (currentTime.isAfter(currentSlot.startTime) && currentTime.isBefore(currentSlot.endTime)) {
+                    //Execute now
                 }
             } else if (task.nature.deferrable) {
                 val taskDurationInHours = task.duration.toHours().toInt()
@@ -83,16 +89,17 @@ public class WaitAWhileScheduler(
                 if (timeToDeadlineInHours.toInt() > 0) {
                     forecast = carbonMod!!.getForecast(timeToDeadlineInHours.toInt())
                 }
-                //Implement logic for choosing best time window here
+
                 if (forecast != null && taskDurationInHours < timeToDeadlineInHours) {
-                    val scheduledTime = findBestWindow(task, forecast, taskDurationInHours)
-                    if (scheduledTime != currentTime) {
+                    val selectedTimeSlots = findTimeSlots(task, forecast, taskDurationInHours)
+                    task.timeSlots = selectedTimeSlots
+                    val firstTimeSlot = task.timeSlots.peek()
+                    if (firstTimeSlot?.startTime == currentTime) {
                         task.preScheduled = true
-                        task.scheduledTime = scheduledTime
-                        continue
                     }
                     else {
-                        //Execute right now is the best
+                        task.preScheduled = true
+                        continue
                     }
                 }
             }
@@ -151,29 +158,38 @@ public class WaitAWhileScheduler(
     ) {
     }
 
-    public fun findBestWindow(task: ServiceTask, forecast: DoubleArray, taskDurationInHours: Int): Instant? {
+    public fun findTimeSlots(task: ServiceTask, forecast: DoubleArray, taskDurationInHours: Int): Queue<TimeSlot>? {
         val currentTime = clock.instant()
+        val oneHourDuration = java.time.Duration.ofHours(1)
+        val currentTimeSlot = TimeSlot(currentCarbonIntensity, currentTime, currentTime.plus(oneHourDuration))
+        val timeSlotQueue: Queue<TimeSlot> = LinkedList()
+
         if (task.nature.deferrable) {
-            val currentCarbonList = forecast.copyOfRange(0, taskDurationInHours).plus(currentCarbonIntensity)
-            var lowestWindow = currentCarbonList.average()
-            var estimatedDelayBlock = 0
-            for (i in 0 until forecast.size - taskDurationInHours - 1) {
-                val range = forecast.copyOfRange(i, i + taskDurationInHours)
-                val currentWindow = range.average()
-                if (currentWindow < lowestWindow) {
-                    lowestWindow = currentWindow
-                    estimatedDelayBlock = i + 1
-                }
+            val availableSlots = mutableListOf<TimeSlot>()
+            availableSlots.add(currentTimeSlot)
+            var startTime = currentTime.plus(oneHourDuration)
+            var endTime = startTime.plus(oneHourDuration)
+
+            for (carbon in forecast) {
+                availableSlots.add(TimeSlot(carbon, startTime, endTime))
+                startTime = startTime.plus(oneHourDuration)
+                endTime = endTime.plus(oneHourDuration)
             }
-            val estimatedDelayTimeInHours = estimatedDelayBlock
-            if (estimatedDelayTimeInHours > 0) {
-                val estimatedDelayTimeInDuration = estimatedDelayTimeInHours.hours
-                val estimatedExecutionTime = currentTime.plus(estimatedDelayTimeInDuration.toJavaDuration())
-                return estimatedExecutionTime
-            } else {
-                return currentTime
+
+            val sortedByIntensity = availableSlots.sortedBy { it.carbonIntensity }
+            var selectedSlots = sortedByIntensity.take(taskDurationInHours)
+            if (selectedSlots.isEmpty()) {
+                selectedSlots = sortedByIntensity.take(1)
             }
+
+            val sortedByTime = selectedSlots.sortedBy { it.startTime }
+            for (slot in sortedByTime) {
+                timeSlotQueue.add(slot)
+            }
+            return timeSlotQueue
         }
-        return currentTime
+
+        timeSlotQueue.add(currentTimeSlot)
+        return timeSlotQueue
     }
 }
