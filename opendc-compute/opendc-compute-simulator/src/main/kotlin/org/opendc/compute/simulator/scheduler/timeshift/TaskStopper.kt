@@ -74,6 +74,29 @@ public class TaskStopper(
         }
     }
 
+    private fun myPauseTasks() {
+        for (host in service!!.hosts) {
+            val guests = host.getGuests()
+
+            val snapshots =
+                guests.map {
+                    it.virtualMachine!!.makeSnapshot(clock.millis())
+                    it.virtualMachine!!.snapshot
+                }
+            val tasks = guests.map { it.task }
+
+//            host.pauseAllTasks()
+
+            host.pausePartially()
+
+            for ((task, snapshot) in tasks.zip(snapshots)) {
+                if (clock.instant().isBefore(task.currentTimeSlot.startTime)) {
+                    client!!.rescheduleTask(task, snapshot)
+                }
+            }
+        }
+    }
+
     override fun updateCarbonIntensity(newCarbonIntensity: Double) {
         if (!forecast) {
             isHighCarbon = noForecastUpdateCarbonIntensity(newCarbonIntensity)
@@ -87,11 +110,13 @@ public class TaskStopper(
             isHighCarbon = newCarbonIntensity > thresholdCarbonIntensity
         }
 
-        if (isHighCarbon) {
-            scope.launch {
-                pauseTasks()
-            }
-        }
+        myPauseTasks()
+
+//        if (isHighCarbon) {
+//            scope.launch {
+//                pauseTasks()
+//            }
+//        }
     }
 
     private fun noForecastUpdateCarbonIntensity(newCarbonIntensity: Double): Boolean {
