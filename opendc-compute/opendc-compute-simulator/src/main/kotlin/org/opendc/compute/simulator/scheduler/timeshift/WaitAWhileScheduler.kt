@@ -75,17 +75,17 @@ public class WaitAWhileScheduler(
                     continue
                 }
             } else if (task.nature.deferrable) {
-                val taskDurationInMinutes = task.duration.toMinutes().toInt()
+                val taskDurationInHours = task.duration.toHours().toInt()
                 val deadline = Instant.ofEpochMilli(task.deadline)
-                val timeToDeadlineInMinutes = java.time.Duration.between(currentTime, deadline).toMinutes()
+                val timeToDeadlineInHours = java.time.Duration.between(currentTime, deadline).toHours()
 
                 var forecast: DoubleArray? = null
-                if (timeToDeadlineInMinutes.toInt() > 0) {
-                    forecast = carbonMod!!.getForecast(timeToDeadlineInMinutes.toInt() / 15)
+                if (timeToDeadlineInHours.toInt() > 0) {
+                    forecast = carbonMod!!.getForecast(timeToDeadlineInHours.toInt())
                 }
                 //Implement logic for choosing best time window here
-                if (forecast != null && taskDurationInMinutes < timeToDeadlineInMinutes) {
-                    val scheduledTime = findBestWindow(task, forecast, taskDurationInMinutes)
+                if (forecast != null && taskDurationInHours < timeToDeadlineInHours) {
+                    val scheduledTime = findBestWindow(task, forecast, taskDurationInHours)
                     if (scheduledTime != currentTime) {
                         task.preScheduled = true
                         task.scheduledTime = scheduledTime
@@ -151,23 +151,23 @@ public class WaitAWhileScheduler(
     ) {
     }
 
-    public fun findBestWindow(task: ServiceTask, forecast: DoubleArray, taskDurationInMinutes: Int): Instant? {
+    public fun findBestWindow(task: ServiceTask, forecast: DoubleArray, taskDurationInHours: Int): Instant? {
         val currentTime = clock.instant()
         if (task.nature.deferrable) {
-            val currentCarbonList = forecast.copyOfRange(0, (taskDurationInMinutes / 15)).plus(currentCarbonIntensity)
+            val currentCarbonList = forecast.copyOfRange(0, taskDurationInHours).plus(currentCarbonIntensity)
             var lowestWindow = currentCarbonList.average()
             var estimatedDelayBlock = 0
-            for (i in 0 until forecast.size - taskDurationInMinutes / 15 - 1) {
-                val range = forecast.copyOfRange(i, i + taskDurationInMinutes / 15)
+            for (i in 0 until forecast.size - taskDurationInHours - 1) {
+                val range = forecast.copyOfRange(i, i + taskDurationInHours)
                 val currentWindow = range.average()
                 if (currentWindow < lowestWindow) {
                     lowestWindow = currentWindow
                     estimatedDelayBlock = i + 1
                 }
             }
-            val estimatedDelayTimeInMinutes = estimatedDelayBlock * 15
-            if (estimatedDelayTimeInMinutes > 0) {
-                val estimatedDelayTimeInDuration = estimatedDelayTimeInMinutes.minutes
+            val estimatedDelayTimeInHours = estimatedDelayBlock
+            if (estimatedDelayTimeInHours > 0) {
+                val estimatedDelayTimeInDuration = estimatedDelayTimeInHours.hours
                 val estimatedExecutionTime = currentTime.plus(estimatedDelayTimeInDuration.toJavaDuration())
                 return estimatedExecutionTime
             } else {
