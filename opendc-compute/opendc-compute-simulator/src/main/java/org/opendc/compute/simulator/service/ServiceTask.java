@@ -26,9 +26,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +75,8 @@ public class ServiceTask {
 
     private Instant scheduledTime;
 
+    private Queue<TimeSlot> timeSlots = new LinkedList<>();
+
     ServiceTask(
             ComputeService service,
             UUID uid,
@@ -95,6 +99,14 @@ public class ServiceTask {
 
         this.submittedAt = this.service.getClock().instant();
     }
+
+    public Queue<TimeSlot> getTimeSlots() { return timeSlots; }
+
+    public void setTimeSlots(Queue<TimeSlot> timeSlots) { this.timeSlots = timeSlots; }
+
+    public TimeSlot getCurrentTimeSlot() { return timeSlots.peek(); }
+
+    public void removeCurrentTimeSlot() { timeSlots.remove(); }
 
     public Instant getScheduledTime() { return scheduledTime; }
     public boolean getPreScheduled() { return preScheduled; }
