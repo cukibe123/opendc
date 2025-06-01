@@ -29,11 +29,13 @@ import org.opendc.compute.simulator.provisioner.registerComputeMonitor
 import org.opendc.compute.simulator.provisioner.setupComputeService
 import org.opendc.compute.simulator.provisioner.setupHosts
 import org.opendc.compute.simulator.scheduler.ComputeScheduler
+import org.opendc.compute.simulator.scheduler.timeshift.WaitAWhileScheduler
 import org.opendc.compute.simulator.service.ComputeService
 import org.opendc.compute.simulator.telemetry.parquet.ParquetComputeMonitor
 import org.opendc.compute.topology.clusterTopology
 import org.opendc.experiments.base.experiment.Scenario
 import org.opendc.experiments.base.experiment.specs.allocation.TimeShiftAllocationPolicySpec
+import org.opendc.experiments.base.experiment.specs.allocation.WaitAWhileAllocationPolicySpec
 import org.opendc.experiments.base.experiment.specs.allocation.createComputeScheduler
 import org.opendc.experiments.base.experiment.specs.allocation.createTaskStopper
 import org.opendc.experiments.base.experiment.specs.getScalingPolicy
@@ -142,6 +144,20 @@ public fun runScenario(
                 }
 
                 if (scenario.allocationPolicySpec is TimeShiftAllocationPolicySpec) {
+                    val taskStopper =
+                        createTaskStopper(
+                            scenario.allocationPolicySpec.taskStopper,
+                            coroutineContext,
+                            timeSource,
+                        )
+                    if (taskStopper != null) {
+                        taskStopper.setService(service)
+                        carbonModel.addReceiver(taskStopper)
+                    }
+                }
+
+                //Create a TaskStopper if the scheduler is WaitAWhile
+                if (scenario.allocationPolicySpec is WaitAWhileAllocationPolicySpec) {
                     val taskStopper =
                         createTaskStopper(
                             scenario.allocationPolicySpec.taskStopper,
