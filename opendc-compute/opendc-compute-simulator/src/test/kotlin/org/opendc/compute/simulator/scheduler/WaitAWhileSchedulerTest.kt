@@ -59,14 +59,14 @@ class WaitAWhileSchedulerTest {
         every { req.task.flavor.memorySize } returns 1024
         every { req.isCancelled } returns false
         every { req.task.nature } returns TaskNature(true)
-        every { req.task.duration } returns Duration.ofMillis(900000)
-        every { req.task.deadline } returns 8100000
+        every { req.task.duration } returns Duration.ofHours(4)
+        every { req.task.deadline } returns 3600000 * 8
         every { req.task.preScheduled } returns false
 
         scheduler.updateCarbonIntensity(200.0)
 
-        val expectedScheduledTime = clock.instant().plus(Duration.ofMillis(2700000))
-        assertEquals(expectedScheduledTime, scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toMinutes().toInt()))
+        val expectedScheduledTime = clock.instant().plus(Duration.ofMillis(3600000 * 3))
+        assertEquals(expectedScheduledTime, scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toHours().toInt()))
     }
 
     @Test
@@ -101,7 +101,7 @@ class WaitAWhileSchedulerTest {
         scheduler.updateCarbonIntensity(200.0)
 
         val expectedScheduledTime = clock.instant().plus(Duration.ofMillis(0))
-        assertEquals(expectedScheduledTime, scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toMinutes().toInt()))
+        assertEquals(expectedScheduledTime, scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toHours().toInt()))
     }
 
 
@@ -130,14 +130,14 @@ class WaitAWhileSchedulerTest {
         every { req.task.flavor.memorySize } returns 1024
         every { req.isCancelled } returns false
         every { req.task.nature } returns TaskNature(true)
-        every { req.task.duration } returns Duration.ofMillis(1800000)
-        every { req.task.deadline } returns 8100000
+        every { req.task.duration } returns Duration.ofMillis(7200000)
+        every { req.task.deadline } returns 3600000 * 8
         every { req.task.preScheduled } returns false
 
         scheduler.updateCarbonIntensity(50.0)
 
         //now equals to clock.instant()
-        assertEquals(clock.instant(), scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toMinutes().toInt()))
+        assertEquals(clock.instant(), scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toHours().toInt()))
     }
 
     @Test
@@ -165,13 +165,13 @@ class WaitAWhileSchedulerTest {
         every { req.task.flavor.memorySize } returns 1024
         every { req.isCancelled } returns false
         every { req.task.nature } returns TaskNature(true)
-        every { req.task.duration } returns Duration.ofMillis(900000)
-        every { req.task.deadline } returns 8100000
+        every { req.task.duration } returns Duration.ofMillis(3600000)
+        every { req.task.deadline } returns 3600000 * 8
         every { req.task.preScheduled } returns false
 
         scheduler.updateCarbonIntensity(70.0)
-        val expectedTime = clock.instant().plus(Duration.ofMillis(900000))
-        assertEquals(expectedTime, scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toMinutes().toInt()))
+        val expectedTime = clock.instant().plus(Duration.ofMillis(3600000))
+        assertEquals(expectedTime, scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toHours().toInt()))
     }
 
     @Test
@@ -199,14 +199,13 @@ class WaitAWhileSchedulerTest {
         every { req.task.flavor.memorySize } returns 1024
         every { req.isCancelled } returns false
         every { req.task.nature } returns TaskNature(true)
-        every { req.task.duration } returns Duration.ofMillis(900000)
-        every { req.task.deadline } returns 8100000
+        every { req.task.duration } returns Duration.ofMillis(3600000 * 2)
+        every { req.task.deadline } returns 3600000 * 8
         every { req.task.preScheduled } returns false
 
         scheduler.updateCarbonIntensity(200.0)
 
-        val expectedScheduledTime = clock.instant().plus(Duration.ofMillis(4500000))
-        assertEquals(expectedScheduledTime, scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toMinutes().toInt()))
+        val expectedScheduledTime = clock.instant().plus(Duration.ofMillis(3600000 * 5))
+        assertEquals(expectedScheduledTime, scheduler.findBestWindow(req.task, forecast=forecast, req.task.duration.toHours().toInt()))
     }
-
 }
