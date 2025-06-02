@@ -71,38 +71,41 @@ public class WaitAWhileScheduler(
             val task = request.task
             val currentTime = clock.instant()
 
-            if (task.preScheduled) {
+            if (task.preScheduled || task.isPaused) {
                 //If it is not the time, then we keep it waiting
                 val currentSlot = task.currentTimeSlot
                 if (currentTime.isBefore(currentSlot.startTime)) {
                     continue
-                }
-                else if (currentTime.isAfter(currentSlot.startTime) && currentTime.isBefore(currentSlot.endTime)) {
-                    //Execute now
                 }
             } else if (task.nature.deferrable) {
                 val taskDurationInHours = task.duration.toHours().toInt()
                 val deadline = Instant.ofEpochMilli(task.deadline)
                 val timeToDeadlineInHours = java.time.Duration.between(currentTime, deadline).toHours()
 
-                var forecast: DoubleArray? = null
                 if (timeToDeadlineInHours.toInt() > 0) {
-                    forecast = carbonMod!!.getForecast(timeToDeadlineInHours.toInt())
-                }
-
-                if (forecast != null && taskDurationInHours < timeToDeadlineInHours) {
-                    val selectedTimeSlots = findTimeSlots(task, forecast, taskDurationInHours)
-                    task.timeSlots = selectedTimeSlots
-                    val firstTimeSlot = task.timeSlots.peek()
-                    if (firstTimeSlot?.startTime == currentTime) {
+                    val forecast = carbonMod!!.getForecast(timeToDeadlineInHours.toInt())
+                    if (taskDurationInHours < timeToDeadlineInHours) {
+                        val selectedTimeSlots = findTimeSlots(task, forecast, taskDurationInHours)
+                        task.timeSlots = selectedTimeSlots
+                        val firstTimeSlot = task.timeSlots.peek()
                         task.preScheduled = true
+                        if (firstTimeSlot?.startTime == currentTime) { //Schedule now
+                        }
+                        else {
+                            continue
+                        }
                     }
                     else {
-                        task.preScheduled = true
-                        continue
+                        task.isPausable = false
                     }
                 }
+                else {
+                    task.isPausable = false
+                }
+                //Execute now if the deadline is 0 hours left
             }
+
+            task.isPaused = false
 
             val filteredHosts = hosts.filter { host -> filters.all { filter -> filter.test(host, task) } }
 
