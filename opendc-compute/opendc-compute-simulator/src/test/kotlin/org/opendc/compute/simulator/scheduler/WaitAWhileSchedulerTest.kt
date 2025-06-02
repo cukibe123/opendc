@@ -26,6 +26,8 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.opendc.compute.simulator.host.SimHost
+import org.opendc.compute.simulator.internal.Guest
 import org.opendc.compute.simulator.scheduler.timeshift.WaitAWhileScheduler
 import org.opendc.compute.simulator.service.ServiceTask
 import org.opendc.compute.simulator.service.TaskNature
