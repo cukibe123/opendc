@@ -73,7 +73,7 @@ public class TaskStopper(
             /**
              * All tasks would be switched to PAUSED at this point
              */
-            host.pausePartially(currentCarbonIntensity)
+            host.pausePartially()
 
             for ((task, snapshot) in tasks.zip(snapshots)) {
                 if (task.isPausable && task.isPaused) {
@@ -98,13 +98,13 @@ public class TaskStopper(
             this.lowerCarbonIntensityThreshold = forecast.sorted()[(localForecastSize * 0.4).roundToInt()]
             this.upperCarbonIntensityThreshold = thresholdCarbonIntensity
             isHighCarbon = newCarbonIntensity > this.upperCarbonIntensityThreshold
-
         }
 
-        scope.launch {
-            pauseTasks(newCarbonIntensity)
+        if (isHighCarbon) {
+            scope.launch {
+                pauseTasks(newCarbonIntensity)
+            }
         }
-
     }
 
     private fun noForecastUpdateCarbonIntensity(newCarbonIntensity: Double): Boolean {
