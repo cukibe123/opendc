@@ -42,12 +42,6 @@ class DTSchedulerTest {
         every { req.task.isPaused } returns false
         every { req.task.isPausable } returns true
 
-        every { req.task.lowerCarbonThreshold = any() } answers {
-            firstArg<Double>()
-        }
-        every { req.task.upperCarbonThreshold = any() } answers {
-            firstArg<Double>()
-        }
         every { req.task.setExecuted(any()) } answers {
             firstArg<Boolean>()
         }
@@ -97,12 +91,6 @@ class DTSchedulerTest {
         every { req.task.isPaused } returns false
         every { req.task.isPausable } returns false
 
-        every { req.task.lowerCarbonThreshold = any() } answers {
-            firstArg<Double>()
-        }
-        every { req.task.upperCarbonThreshold = any() } answers {
-            firstArg<Double>()
-        }
         every { req.task.setExecuted(any()) } answers {
             firstArg<Boolean>()
         }
@@ -127,9 +115,6 @@ class DTSchedulerTest {
         //It should return FAILURE because it tries to schedule, but there is no machine
         assertEquals(SchedulingResultType.FAILURE, scheduler.select(mutableListOf(req).iterator()).resultType)
     }
-
-
-
 
     @Test
     fun testBasicDeferring() {
@@ -157,12 +142,6 @@ class DTSchedulerTest {
         every { req.task.isPaused } returns false
         every { req.task.isPausable } returns true
 
-        every { req.task.lowerCarbonThreshold = any() } answers {
-            firstArg<Double>()
-        }
-        every { req.task.upperCarbonThreshold = any() } answers {
-            firstArg<Double>()
-        }
         every { req.task.setExecuted(any()) } answers {
             firstArg<Boolean>()
         }
@@ -211,12 +190,6 @@ class DTSchedulerTest {
         every { req.task.isPaused } returns false
         every { req.task.isPausable } returns true
 
-        every { req.task.lowerCarbonThreshold = any() } answers {
-            firstArg<Double>()
-        }
-        every { req.task.upperCarbonThreshold = any() } answers {
-            firstArg<Double>()
-        }
         every { req.task.setExecuted(any()) } answers {
             firstArg<Boolean>()
         }
@@ -244,65 +217,6 @@ class DTSchedulerTest {
         assertEquals(SchedulingResultType.FAILURE, scheduler.select(mutableListOf(req).iterator()).resultType)
     }
 
-
-    @Test
-    fun testNotInterruptionWhenLowCarbon() {
-        val service = mockk<ServiceTask>()
-        val host = mockk<SimHost>()
-        val guest = mockk<Guest>()
-
-        var isPaused = false
-
-        every { service.upperCarbonThreshold } returns 200.0
-        every { service.isPausable } returns true
-
-        every { host.getGuests() } returns listOf(guest)
-        every { guest.task } returns service
-
-        //The logic of this function is the same as the one we use in the actual algorithm
-        every { host.pausePartially(any()) } answers {
-            val iterator = host.getGuests().iterator()
-            while (iterator.hasNext()) {
-                val guest = iterator.next()
-                if (guest.task.isPausable && (guest.task.upperCarbonThreshold < firstArg<Double>())) {
-                    isPaused = true
-                }
-            }
-        }
-
-        host.pausePartially(20.0)
-        assertEquals(false, isPaused)
-    }
-
-    @Test
-    fun testInterruptionWhenHighCarbon() {
-        val service = mockk<ServiceTask>()
-        val host = mockk<SimHost>()
-        val guest = mockk<Guest>()
-
-        var isPaused = false
-
-        every { service.upperCarbonThreshold } returns 200.0
-        every { service.isPausable } returns true
-
-        every { host.getGuests() } returns listOf(guest)
-        every { guest.task } returns service
-
-        //The logic of this function is the same as the one we use in the actual algorithm
-        every { host.pausePartially(any()) } answers {
-            val iterator = host.getGuests().iterator()
-            while (iterator.hasNext()) {
-                val guest = iterator.next()
-                if (guest.task.isPausable && (guest.task.upperCarbonThreshold < firstArg<Double>())) {
-                    isPaused = true
-                }
-            }
-        }
-
-        host.pausePartially(300.0)
-        assertEquals(true, isPaused)
-    }
-
     @Test
     fun testNotInterruptionWhenTaskIsNotPausable() {
         val service = mockk<ServiceTask>()
@@ -311,24 +225,23 @@ class DTSchedulerTest {
 
         var isPaused = false
 
-        every { service.upperCarbonThreshold } returns 200.0
         every { service.isPausable } returns false
+        every { service.isPaused } returns false
 
         every { host.getGuests() } returns listOf(guest)
         every { guest.task } returns service
 
         //The logic of this function is the same as the one we use in the actual algorithm
-        every { host.pausePartially(any()) } answers {
+        every { host.pausePartially() } answers {
             val iterator = host.getGuests().iterator()
             while (iterator.hasNext()) {
                 val guest = iterator.next()
-                if (guest.task.isPausable && (guest.task.upperCarbonThreshold < firstArg<Double>())) {
+                if (guest.task.isPausable && (!guest.task.isPaused)) {
                     isPaused = true
                 }
             }
         }
 
-        host.pausePartially(300.0)
         assertEquals(false, isPaused)
     }
 
