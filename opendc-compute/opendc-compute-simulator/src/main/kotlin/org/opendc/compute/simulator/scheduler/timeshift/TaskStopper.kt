@@ -70,7 +70,7 @@ public class TaskStopper(
             val tasks = guests.map { it.task }
 
 //            host.pauseAllTasks()
-            host.pausePartially(currentIntensity)
+            host.pausePartially()
 
             for ((task, snapshot) in tasks.zip(snapshots)) {
                 if (task.isPausable && task.isPaused) {
@@ -96,9 +96,12 @@ public class TaskStopper(
             isHighCarbon = newCarbonIntensity > thresholdCarbonIntensity
         }
         //We call the pauseTasks every time
-        scope.launch {
+        if (isHighCarbon) {
+            scope.launch {
                 pauseTasks(newCarbonIntensity)
+            }
         }
+
     }
 
     private fun noForecastUpdateCarbonIntensity(newCarbonIntensity: Double): Boolean {
