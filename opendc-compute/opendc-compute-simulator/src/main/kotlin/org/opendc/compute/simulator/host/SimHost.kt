@@ -157,33 +157,43 @@ public class SimHost(
         }
     }
 
-    public fun pausePartially() {
-        val listGuest = guests.toList()
+    public fun resetCorrectTimeSlot() {
+        val listGuest = getGuests()
         val currentTime = clock.instant()
         for (guest in listGuest) {
-            val timeSlots = guest.task.timeSlots
-            var currentTimeSlot = timeSlots.peek()
-            //Find the correct block
-            while (currentTime.isAfter(currentTimeSlot.endTime) && currentTimeSlot != null) {
-                currentTimeSlot = timeSlots.poll()
-            }
-
-            //Do not interrupt if there is no timeslot left
-            if (currentTimeSlot == null) {
-                continue
-            }
-            //Do not interrupt if tasks are still in the located timeslot
-            else if (currentTime.isAfter(currentTimeSlot.startTime) && currentTime.isBefore(currentTimeSlot.endTime)) {
-                continue
-            }
-            //Interrupt if it is not the right time slot
-            else if (currentTime.isBefore(currentTimeSlot.startTime)) {
-                guest.pause()
-                this.delete(guest.task)
+            val task = guest.task
+            var currentTimeSlot = task.currentTimeSlot
+            while (currentTimeSlot != null && currentTime.isAfter(currentTimeSlot.endTime)) {
+                currentTimeSlot = task.removeCurrentTimeSlot()
             }
         }
-
     }
+
+    public fun pausePartially() {
+        val listGuest = getGuests()
+        val currentTime = clock.instant()
+        for (guest in listGuest) {
+            val task = guest.task
+            if (!task.isPaused && task.isPausable) {
+                val currentTimeSlot = task.currentTimeSlot
+                //Do not interrupt if there is no timeslot left
+                if (currentTimeSlot == null) {
+                    continue
+                }
+                //Do not interrupt if tasks are still in the located timeslot
+                else if (!currentTime.isBefore(currentTimeSlot.startTime) && currentTime.isBefore(currentTimeSlot.endTime)) {
+                    continue
+                }
+                //Interrupt if it is not the right time slot
+                else if (currentTime.isBefore(currentTimeSlot.startTime)) {
+                    task.isPaused = true
+                    guest.pause()
+                    this.delete(task)
+                }
+            }
+        }
+    }
+
     public fun pauseAllTasks() {
         while (guests.size > 0) {
             val guest = guests.first()
