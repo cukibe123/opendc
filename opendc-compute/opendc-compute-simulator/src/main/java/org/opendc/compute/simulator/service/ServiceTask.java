@@ -72,8 +72,10 @@ public class ServiceTask {
     private int numPauses = 0;
 
     private boolean preScheduled = false;
+    private boolean paused = false;
 
-    private Instant scheduledTime;
+    private boolean pausable;
+
 
     private Queue<TimeSlot> timeSlots = new LinkedList<>();
 
@@ -96,9 +98,14 @@ public class ServiceTask {
         this.flavor = flavor;
         this.workload = workload;
         this.meta = meta;
+        this.pausable = this.nature.deferrable;
 
         this.submittedAt = this.service.getClock().instant();
     }
+
+    public void setPausable(boolean status) { this.pausable = status; }
+
+    public boolean isPausable() { return pausable; }
 
     public Queue<TimeSlot> getTimeSlots() { return timeSlots; }
 
@@ -106,12 +113,14 @@ public class ServiceTask {
 
     public TimeSlot getCurrentTimeSlot() { return timeSlots.peek(); }
 
-    public void removeCurrentTimeSlot() { timeSlots.remove(); }
+    public TimeSlot removeCurrentTimeSlot() { return timeSlots.poll(); }
 
-    public Instant getScheduledTime() { return scheduledTime; }
+    public boolean isPaused() { return paused; }
+
+    public void setPaused(boolean status) { paused = status; }
+
     public boolean getPreScheduled() { return preScheduled; }
 
-    public void setScheduledTime(Instant scheduledTime) { this.scheduledTime = scheduledTime; }
     public void setPreScheduled(boolean status) { this.preScheduled = status; }
     @NotNull
     public UUID getUid() {
