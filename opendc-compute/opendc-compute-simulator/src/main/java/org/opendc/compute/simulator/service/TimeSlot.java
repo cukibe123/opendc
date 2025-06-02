@@ -17,4 +17,8 @@ public class TimeSlot {
         this.startTime = startTime;
         this.endTime = endTime;
     }
+
+    @Override public String toString() {
+        return "TimeSlot(startTime=" + startTime + ", endTime=" + endTime + ", " + carbonIntensity + ")";
+    }
 }
