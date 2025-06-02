@@ -69,7 +69,7 @@ public class STScheduler(
             val deadline = Instant.ofEpochMilli(task.deadline)
 
             if (task.isExecuted && task.isPaused && task.isPausable) {
-                if (task.carbonThreshold < currentCarbonIntensity) {
+                if (currentThreshold < currentCarbonIntensity) {
                     if (estimatedCompletion.isBefore(deadline)) {
                         continue
                     }
@@ -87,10 +87,6 @@ public class STScheduler(
                         //If the deadline does not allow, then we execute now
                         //pausable assigned to false so the task cannot be interrupted
                         task.isPausable = false
-                    }
-                    else {
-                        //Assign carbonThreshold to the current task
-                        task.carbonThreshold = currentThreshold
                     }
                 }
             }

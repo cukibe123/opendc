@@ -75,22 +75,16 @@ public class ServiceTask {
 
     private boolean isPausable;
 
-    private double carbonThreshold = 0.0;
-
     public boolean isPaused() { return isPaused; }
 
     public boolean isExecuted() { return isExecuted; }
     public boolean isPausable() { return isPausable; }
-
-    public double getCarbonThreshold() { return carbonThreshold; }
 
     public void setPauseStatus(boolean status) { isPaused = status; }
 
     public void setPausable(boolean status) { isPausable = status; }
 
     public void setExecuted(boolean status) { isExecuted = status; }
-
-    public void setCarbonThreshold(double carbonIntensity) { carbonThreshold = carbonIntensity; }
 
     ServiceTask(
         ComputeService service,
@@ -111,6 +105,7 @@ public class ServiceTask {
         this.flavor = flavor;
         this.workload = workload;
         this.meta = meta;
+        //Pausable if it is deferrable
         this.isPausable = nature.deferrable;
         this.submittedAt = this.service.getClock().instant();
     }
