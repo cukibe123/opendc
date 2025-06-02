@@ -85,12 +85,11 @@ public class TaskStopper(
                 }
             val tasks = guests.map { it.task }
 
-//            host.pauseAllTasks()
-
+            host.resetCorrectTimeSlot()
             host.pausePartially()
 
             for ((task, snapshot) in tasks.zip(snapshots)) {
-                if (clock.instant().isBefore(task.currentTimeSlot.startTime)) {
+                if (task.isPaused && task.isPausable) {
                     client!!.rescheduleTask(task, snapshot)
                 }
             }
