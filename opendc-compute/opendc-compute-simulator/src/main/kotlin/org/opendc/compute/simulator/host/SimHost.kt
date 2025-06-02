@@ -160,11 +160,11 @@ public class SimHost(
     /**
     Pause partially the number of tasks
      */
-    public fun pausePartially(currentCarbonIntensity : Double) {
+    public fun pausePartially() {
         val iterator = guests.iterator()
         while (iterator.hasNext()) {
             val guest = iterator.next()
-            if (guest.task.isPausable && (guest.task.upperCarbonThreshold < currentCarbonIntensity)) {
+            if (guest.task.isPausable && guest.task.isPaused) {
                 guest.task.setPauseStatus(true)
                 guest.pause()
                 this.delete(guest.task)
