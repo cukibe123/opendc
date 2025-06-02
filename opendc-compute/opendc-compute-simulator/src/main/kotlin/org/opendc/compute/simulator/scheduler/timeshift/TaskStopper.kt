@@ -59,7 +59,7 @@ public class TaskStopper(
         this.client = service.newClient()
     }
 
-    private fun pauseTasks(currentCarbonIntensity: Double) {
+    private fun pauseTasks() {
         for (host in service!!.hosts) {
             val guests = host.getGuests()
 
@@ -102,7 +102,7 @@ public class TaskStopper(
 
         if (isHighCarbon) {
             scope.launch {
-                pauseTasks(newCarbonIntensity)
+                pauseTasks()
             }
         }
     }
