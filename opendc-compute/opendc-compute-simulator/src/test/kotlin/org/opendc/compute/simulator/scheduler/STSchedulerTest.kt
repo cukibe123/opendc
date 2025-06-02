@@ -67,9 +67,6 @@ class STSchedulerTest {
         every { req.task.isPaused } returns false
         every { req.task.isPausable } returns true
 
-        every { req.task.carbonThreshold = any() } answers {
-            firstArg<Double>()
-        }
         every { req.task.setPauseStatus(any()) } answers {
             firstArg<Boolean>()
         }
@@ -158,9 +155,6 @@ class STSchedulerTest {
         every { req.task.isPaused } returns false
         every { req.task.isPausable } returns false
 
-        every { req.task.carbonThreshold = any() } answers {
-            firstArg<Double>()
-        }
         every { req.task.setPauseStatus(any()) } answers {
             firstArg<Boolean>()
         }
@@ -211,9 +205,6 @@ class STSchedulerTest {
         every { req.task.isPaused } returns false
         every { req.task.isPausable } returns true
 
-        every { req.task.carbonThreshold = any() } answers {
-            firstArg<Double>()
-        }
         every { req.task.setPauseStatus(any()) } answers {
             firstArg<Boolean>()
         }
@@ -241,35 +232,6 @@ class STSchedulerTest {
     }
 
     @Test
-    fun testInterruptionIfCarbonIsHigh() {
-        val service = mockk<ServiceTask>()
-        val host = mockk<SimHost>()
-        val guest = mockk<Guest>()
-
-        var result = false
-
-        every { service.carbonThreshold } returns 100.0
-        every { service.isPausable } returns true
-
-        every { host.getGuests() } returns listOf(guest)
-        every { guest.task } returns service
-
-        //The logic of this function is the same as the one we use in the actual algorithm
-        every { host.pausePartially(any()) } answers {
-            val iterator = host.getGuests().iterator()
-            while (iterator.hasNext()) {
-                val guest = iterator.next()
-                if (guest.task.isPausable && (guest.task.carbonThreshold < firstArg<Double>())) {
-                    result = true
-                }
-            }
-        }
-
-        host.pausePartially(200.0)
-        assertEquals(true, result)
-    }
-
-    @Test
     fun testNotInterruptionIfTaskIsNotPausable() {
         val service = mockk<ServiceTask>()
         val host = mockk<SimHost>()
@@ -277,55 +239,25 @@ class STSchedulerTest {
 
         var result = false
 
-        every { service.carbonThreshold } returns 100.0
         //Task is not pausable
         every { service.isPausable } returns false
+        every { service.isPaused } returns false
 
         every { host.getGuests() } returns listOf(guest)
         every { guest.task } returns service
 
         //The logic of this function is the same as the one we use in the actual algorithm
-        every { host.pausePartially(any()) } answers {
+        every { host.pausePartially() } answers {
             val iterator = host.getGuests().iterator()
             while (iterator.hasNext()) {
                 val guest = iterator.next()
-                if (guest.task.isPausable && (guest.task.carbonThreshold < firstArg<Double>())) {
+                if (guest.task.isPausable && !guest.task.isPaused) {
                     result = true
                 }
             }
         }
 
-        host.pausePartially(200.0)
-        assertEquals(false, result)
-    }
-
-    @Test
-    fun testNotInterruptionWhenCarbonIsLow() {
-        val service = mockk<ServiceTask>()
-        val host = mockk<SimHost>()
-        val guest = mockk<Guest>()
-
-        var result = false
-
-        every { service.carbonThreshold } returns 100.0
-        //Task is not pausable
-        every { service.isPausable } returns true
-
-        every { host.getGuests() } returns listOf(guest)
-        every { guest.task } returns service
-
-        //The logic of this function is the same as the one we use in the actual algorithm
-        every { host.pausePartially(any()) } answers {
-            val iterator = host.getGuests().iterator()
-            while (iterator.hasNext()) {
-                val guest = iterator.next()
-                if (guest.task.isPausable && (guest.task.carbonThreshold < firstArg<Double>())) {
-                    result = true
-                }
-            }
-        }
-
-        host.pausePartially(20.0)
+        host.pausePartially()
         assertEquals(false, result)
     }
 }
