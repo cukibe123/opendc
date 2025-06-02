@@ -109,8 +109,9 @@ public class TaskStopper(
             isHighCarbon = newCarbonIntensity > thresholdCarbonIntensity
         }
 
-        myPauseTasks()
-
+        scope.launch {
+            myPauseTasks()
+        }
 //        if (isHighCarbon) {
 //            scope.launch {
 //                pauseTasks()
