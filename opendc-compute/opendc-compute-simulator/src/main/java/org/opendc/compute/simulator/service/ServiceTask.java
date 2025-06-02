@@ -77,11 +77,6 @@ public class ServiceTask {
 
     private boolean isExecuted = false;
 
-    private double upperCarbonThreshold = 0.0;
-
-    private double lowerCarbonThreshold = 0.0;
-
-
     ServiceTask(
         ComputeService service,
         UUID uid,
@@ -113,17 +108,9 @@ public class ServiceTask {
 
     public boolean getIsExecuted() { return isExecuted; }
 
-    public double getUpperCarbonThreshold() { return upperCarbonThreshold; }
-
-    public double getLowerCarbonThreshold() { return lowerCarbonThreshold; }
-
     public void setPausable(boolean status) { this.isPausable = status; }
 
     public void setPauseStatus(boolean status) { this.isPaused = status; }
-
-    public void setUpperCarbonThreshold(double carbonIntensity) { this.upperCarbonThreshold = carbonIntensity; }
-
-    public void setLowerCarbonThreshold(double carbonIntensity) { this.lowerCarbonThreshold = carbonIntensity; }
 
     public void setExecuted(boolean status) { this.isExecuted = status; }
 

@@ -72,7 +72,7 @@ public class DTScheduler(
             if (task.isExecuted && task.isPaused && task.isPausable) {
                 // If the current carbon intensity is higher, we check
                 // If it is lower than the lower bound, then we are good to go
-                if (task.lowerCarbonThreshold < currentCarbonIntensity) {
+                if (lowerThreshold < currentCarbonIntensity) {
                     if (estimatedCompletion.isBefore(deadline)) {
                         continue
                     }
@@ -88,10 +88,6 @@ public class DTScheduler(
                             continue
                         }
                         task.setPausable(false)
-                    }
-                    else {
-                        task.lowerCarbonThreshold = lowerThreshold
-                        task.upperCarbonThreshold = upperThreshold
                     }
                 }
                 else {
