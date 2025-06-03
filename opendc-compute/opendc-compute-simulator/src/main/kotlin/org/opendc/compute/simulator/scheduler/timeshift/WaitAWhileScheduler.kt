@@ -73,8 +73,12 @@ public class WaitAWhileScheduler(
 
             if (task.preScheduled || task.isPaused) {
                 //If it is not the time, then we keep it waiting
-                val currentSlot = task.currentTimeSlot
-                if (currentTime.isBefore(currentSlot.startTime)) {
+                var currentSlot = task.currentTimeSlot
+                val currentTimeSlotQueue = task.timeSlots
+                while (currentSlot != null && !currentTime.isBefore(currentSlot.endTime)) {
+                    currentSlot = currentTimeSlotQueue.poll()
+                }
+                if (currentSlot != null && currentTime.isBefore(currentSlot.startTime)) {
                     continue
                 }
             } else if (task.nature.deferrable) {
