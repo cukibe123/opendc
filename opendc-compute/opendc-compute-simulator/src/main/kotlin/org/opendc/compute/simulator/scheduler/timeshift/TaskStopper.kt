@@ -91,7 +91,6 @@ public class TaskStopper(
 
             val localForecastSize = forecast.size
 
-            //forecastThreshold is set at 0.6
             val quantileIndex = (localForecastSize * forecastThreshold).roundToInt()
             val thresholdCarbonIntensity = forecast.sorted()[quantileIndex]
 
