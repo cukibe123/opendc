@@ -69,7 +69,7 @@ public interface Timeshifter : CarbonReceiver {
 
         //Set the quantile of the currentThreshold fixed
         currentCarbonIntensity = newCarbonIntensity
-        currentThreshold = forecast.sorted()[(localForecastSize * 0.4).roundToInt()]
+        currentThreshold = forecast.sorted()[shortQuantileIndex]
     }
 
     /**
