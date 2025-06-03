@@ -95,7 +95,7 @@ public class TaskStopper(
 
             isHighCarbon = newCarbonIntensity > thresholdCarbonIntensity
         }
-        //We call the pauseTasks every time
+
         if (isHighCarbon) {
             scope.launch {
                 pauseTasks()
