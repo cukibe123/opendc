@@ -95,7 +95,6 @@ public class TaskStopper(
             val quantileIndex = (localForecastSize * forecastThreshold).roundToInt()
             val thresholdCarbonIntensity = forecast.sorted()[quantileIndex]
 
-            this.lowerCarbonIntensityThreshold = forecast.sorted()[(localForecastSize * 0.4).roundToInt()]
             this.upperCarbonIntensityThreshold = thresholdCarbonIntensity
             isHighCarbon = newCarbonIntensity > this.upperCarbonIntensityThreshold
         }
@@ -121,11 +120,9 @@ public class TaskStopper(
          */
 
         val upperQuantileIndex = (this.pastCarbonIntensities.size * 0.6).roundToInt()
-        val lowerQuantileIndex = (this.pastCarbonIntensities.size * 0.4).roundToInt()
 
         val thresholdCarbonIntensity = pastCarbonIntensities.sorted()[upperQuantileIndex]
 
-        this.lowerCarbonIntensityThreshold = pastCarbonIntensities.sorted()[lowerQuantileIndex]
         this.upperCarbonIntensityThreshold = pastCarbonIntensities.sorted()[upperQuantileIndex]
 
         isHighCarbon = (newCarbonIntensity > thresholdCarbonIntensity)
