@@ -250,4 +250,106 @@ class WaitAWhileSchedulerTest {
         //It should be paused because it is not the time yet
         assertEquals(true, isPaused)
     }
+
+    @Test
+    fun testExecuteNowIfItIsCorrectTimeSlot() {
+        //first clock to calculate time slot
+        val clock = mockk<InstantSource>()
+        every { clock.instant() } returns Instant.ofEpochSecond(0)
+
+        //second clock for marking current time
+        val clock_2 = mockk<InstantSource>()
+        every { clock_2.instant() } returns Instant.ofEpochSecond(3600 * 6 + 10)
+
+        val scheduler = WaitAWhileScheduler(
+            filters = emptyList(),
+            weighers = emptyList(),
+            windowSize = 2,
+            clock = clock_2,
+            forecast = false,
+        )
+
+        val task = mockk<ServiceTask>()
+        val request = mockk<SchedulingRequest>()
+
+        val firstTimeSlot =
+            TimeSlot(50.0,
+                clock.instant().plusSeconds(3600 * 3),
+                clock.instant().plusSeconds(3600 * 4))
+        val secondTimeSlot =
+            TimeSlot(50.0,
+                clock.instant().plusSeconds(3600 * 6),
+                clock.instant().plusSeconds(3600 * 7))
+
+        val timeSlotQueue: Queue<TimeSlot> = LinkedList()
+        timeSlotQueue.add(firstTimeSlot)
+        timeSlotQueue.add(secondTimeSlot)
+
+        every { request.task } returns task
+        every { request.isCancelled } returns false
+        every { task.timeSlots } returns timeSlotQueue
+        every { task.isPaused } returns true
+        every { task.preScheduled } returns true
+        every { task.currentTimeSlot } returns task.timeSlots.peek()
+
+        every { task.isPaused = any() } answers {
+            firstArg<Boolean>()
+        }
+
+        //Failed because there is no machine
+        assertEquals(SchedulingResultType.FAILURE, scheduler.select(mutableListOf(request).iterator()).resultType)
+    }
+
+
+    @Test
+    fun testNotExecuteIfNotCorrectTimeSlot() {
+        //first clock to generate pseudo time slots
+        val clock = mockk<InstantSource>()
+        every { clock.instant() } returns Instant.ofEpochSecond(0)
+
+        //second clock for marking current time
+        val clock_2 = mockk<InstantSource>()
+        every { clock_2.instant() } returns Instant.ofEpochSecond(3600 * 5)
+
+        val scheduler = WaitAWhileScheduler(
+            filters = emptyList(),
+            weighers = emptyList(),
+            windowSize = 2,
+            clock = clock_2,
+            forecast = false,
+        )
+
+        val task = mockk<ServiceTask>()
+        val request = mockk<SchedulingRequest>()
+
+        val firstTimeSlot =
+            TimeSlot(50.0,
+                clock.instant().plusSeconds(3600 * 3),
+                clock.instant().plusSeconds(3600 * 4))
+        val secondTimeSlot =
+            TimeSlot(50.0,
+                clock.instant().plusSeconds(3600 * 6),
+                clock.instant().plusSeconds(3600 * 7))
+
+        val timeSlotQueue: Queue<TimeSlot> = LinkedList()
+        timeSlotQueue.add(firstTimeSlot)
+        timeSlotQueue.add(secondTimeSlot)
+
+        every { request.task } returns task
+        every { request.isCancelled } returns false
+        every { task.timeSlots } returns timeSlotQueue
+        every { task.isPaused } returns true
+        every { task.preScheduled } returns true
+        every { task.currentTimeSlot } returns task.timeSlots.peek()
+
+        every { task.isPaused = any() } answers {
+            firstArg<Boolean>()
+        }
+
+        //Failed because there is no machine
+        assertEquals(SchedulingResultType.EMPTY, scheduler.select(mutableListOf(request).iterator()).resultType)
+    }
+
+
+
 }
