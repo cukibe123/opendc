@@ -163,8 +163,9 @@ public class SimHost(
         for (guest in listGuest) {
             val task = guest.task
             var currentTimeSlot = task.currentTimeSlot
-            while (currentTimeSlot != null && currentTime.isAfter(currentTimeSlot.endTime)) {
-                currentTimeSlot = task.removeCurrentTimeSlot()
+            while (currentTimeSlot != null && !currentTime.isBefore(currentTimeSlot.endTime)) {
+                task.timeSlots.poll()
+                currentTimeSlot = task.currentTimeSlot
             }
         }
     }
