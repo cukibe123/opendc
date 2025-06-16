@@ -21,7 +21,7 @@ public class STScheduler(
     private val filters: List<HostFilter>,
     private val weighers: List<HostWeigher>,
     override val windowSize: Int,
-    override val clock : InstantSource,
+    override val clock: InstantSource,
     private val subsetSize: Int = 1,
     override val forecast: Boolean = true,
     override val shortForecastThreshold: Double = 0.2,
@@ -40,8 +40,6 @@ public class STScheduler(
     /**
     My newly added variable for carbon tracing
      */
-    override var currentCarbonIntensity: Double = 0.0
-    override var currentThreshold: Double = 0.0
 
     private val hosts = mutableListOf<HostView>()
 
@@ -64,35 +62,16 @@ public class STScheduler(
 
             val task = request.task
 
-            val currentTime = clock.instant()
-            val estimatedCompletion = currentTime.plus(task.duration)
-            val deadline = Instant.ofEpochMilli(task.deadline)
-
-            if (task.isExecuted && task.isPaused && task.isPausable) {
-                if (currentThreshold < currentCarbonIntensity) {
+            if (task.nature.deferrable) {
+                if (!shortLowCarbon) {
+                    val currentTime = clock.instant()
+                    val estimatedCompletion = currentTime.plus(task.duration)
+                    val deadline = Instant.ofEpochMilli(task.deadline)
                     if (estimatedCompletion.isBefore(deadline)) {
                         continue
                     }
-                    //If the deadline does not allow, then we execute now
-                    //pausable assigned to false so the task cannot be interrupted
-                    task.isPausable = false
                 }
             }
-            else if (!task.isExecuted) {
-                if (task.nature.deferrable) {
-                    if (currentThreshold < currentCarbonIntensity) {
-                        if (estimatedCompletion.isBefore(deadline)) {
-                            continue
-                        }
-                        //If the deadline does not allow, then we execute now
-                        //pausable assigned to false so the task cannot be interrupted
-                        task.isPausable = false
-                    }
-                }
-            }
-
-            task.isExecuted = true
-            task.setPauseStatus(false)
 
             val filteredHosts = hosts.filter { host -> filters.all { filter -> filter.test(host, task) } }
 
