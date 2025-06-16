@@ -154,19 +154,6 @@ public fun runScenario(
                         carbonModel.addReceiver(taskStopper)
                     }
                 }
-
-                if (scenario.allocationPolicySpec is SingleThresholdAllocationPolicySpec) {
-                    val taskStopper =
-                        createTaskStopper(
-                            scenario.allocationPolicySpec.taskStopper,
-                            coroutineContext,
-                            timeSource,
-                        )
-                    if (taskStopper != null) {
-                        taskStopper.setService(service)
-                        carbonModel.addReceiver(taskStopper)
-                    }
-                }
             }
 
             service.replay(
