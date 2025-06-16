@@ -47,9 +47,6 @@ public interface Timeshifter : CarbonReceiver {
      number of intensity forecasts
      */
 
-    public var currentCarbonIntensity: Double
-    public var currentThreshold: Double
-
     override fun updateCarbonIntensity(newCarbonIntensity: Double) {
         if (!forecast) {
             noForecastUpdateCarbonIntensity(newCarbonIntensity)
@@ -64,12 +61,10 @@ public interface Timeshifter : CarbonReceiver {
         val longQuantileIndex = (localForecastSize * longForecastThreshold).roundToInt()
         val longCarbonIntensity = forecast.sorted()[longQuantileIndex]
 
+        //We take advantage of the shortLowCarbon variable, which is already written
+        //as the single threshold value
         shortLowCarbon = newCarbonIntensity < shortCarbonIntensity
         longLowCarbon = newCarbonIntensity < longCarbonIntensity
-
-        //Set the quantile of the currentThreshold fixed
-        currentCarbonIntensity = newCarbonIntensity
-        currentThreshold = forecast.sorted()[shortQuantileIndex]
     }
 
     /**
@@ -96,8 +91,6 @@ public interface Timeshifter : CarbonReceiver {
         longLowCarbon = (newCarbonIntensity < thresholdCarbonIntensity)
 
         //Set the quantile of the currentThreshold fixed
-        currentCarbonIntensity = newCarbonIntensity
-        currentThreshold = pastCarbonIntensities.sorted()[(pastCarbonIntensities.size * 0.4).roundToInt()]
     }
 
     override fun setCarbonModel(carbonModel: CarbonModel?) {
