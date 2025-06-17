@@ -87,7 +87,7 @@ public class WaitAWhileScheduler(
                 val timeToDeadlineInHours = java.time.Duration.between(currentTime, deadline).toHours()
 
                 if (timeToDeadlineInHours.toInt() > 0) {
-                    val forecast = carbonMod!!.getForecast(timeToDeadlineInHours.toInt())
+                    val forecast = carbonMod!!.getForecastWithErrors(timeToDeadlineInHours.toInt())
                     if (taskDurationInHours < timeToDeadlineInHours) {
                         val selectedTimeSlots = findTimeSlots(task, forecast, taskDurationInHours)
                         task.timeSlots = selectedTimeSlots
