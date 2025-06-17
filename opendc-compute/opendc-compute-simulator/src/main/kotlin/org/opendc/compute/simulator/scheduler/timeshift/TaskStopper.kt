@@ -84,7 +84,7 @@ public class TaskStopper(
         if (!forecast) {
             isHighCarbon = noForecastUpdateCarbonIntensity(newCarbonIntensity)
         } else {
-            val forecast = carbonModel!!.getForecast(forecastSize)
+            val forecast = carbonModel!!.getForecastWithErrors(forecastSize)
             val localForecastSize = forecast.size
 
             //forecastThreshold can be defined in the json file
