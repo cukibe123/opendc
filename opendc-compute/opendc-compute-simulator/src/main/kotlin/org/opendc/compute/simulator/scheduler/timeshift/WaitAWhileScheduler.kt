@@ -81,7 +81,7 @@ public class WaitAWhileScheduler(
 
                 var forecast: DoubleArray? = null
                 if (timeToDeadlineInHours.toInt() > 0) {
-                    forecast = carbonMod!!.getForecast(timeToDeadlineInHours.toInt())
+                    forecast = carbonMod!!.getForecastWithErrors(timeToDeadlineInHours.toInt())
                 }
                 //Implement logic for choosing best time window here
                 if (forecast != null && taskDurationInHours < timeToDeadlineInHours) {
