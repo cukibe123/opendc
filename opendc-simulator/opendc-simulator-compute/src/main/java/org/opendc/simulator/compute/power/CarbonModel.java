@@ -69,6 +69,7 @@ public class CarbonModel extends FlowNode {
         List<CarbonFragment> noisyFragments = new ArrayList<>();
 
         for (CarbonFragment fragment : carbonFragments) {
+            //random.nextDouble() generates double numbers from 0.0 to 1.0
             double factor = (1.0 - percentError) + random.nextDouble() * (2 * percentError);
             double noisyIntensity = fragment.getCarbonIntensity() * factor;
             noisyFragments.add(new CarbonFragment(fragment.getStartTime(), fragment.getEndTime(), noisyIntensity));
