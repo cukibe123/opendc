@@ -25,6 +25,8 @@ package org.opendc.simulator.compute.power;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+
 import org.opendc.simulator.engine.engine.FlowEngine;
 import org.opendc.simulator.engine.graph.FlowEdge;
 import org.opendc.simulator.engine.graph.FlowNode;
@@ -40,6 +42,11 @@ public class CarbonModel extends FlowNode {
     private final long startTime; // The absolute timestamp on which the workload started
 
     private final List<CarbonFragment> fragments;
+
+    private final List<CarbonFragment> fragmentsWithErrors;
+
+    private final double percentError = 0.05;
+
     private CarbonFragment current_fragment;
 
     private int fragment_index;
@@ -54,10 +61,21 @@ public class CarbonModel extends FlowNode {
      */
     public CarbonModel(FlowEngine engine, List<CarbonFragment> carbonFragments, long startTime) {
         super(engine);
-
+        long seed = 42L;
+        Random random = new Random(seed);
         this.startTime = startTime;
         this.fragments = carbonFragments;
 
+        List<CarbonFragment> noisyFragments = new ArrayList<>();
+
+        for (CarbonFragment fragment : carbonFragments) {
+            //random.nextDouble() generates double numbers from 0.0 to 1.0
+            double factor = (1.0 - percentError) + random.nextDouble() * (2 * percentError);
+            double noisyIntensity = fragment.getCarbonIntensity() * factor;
+            noisyFragments.add(new CarbonFragment(fragment.getStartTime(), fragment.getEndTime(), noisyIntensity));
+        }
+
+        this.fragmentsWithErrors = noisyFragments;
         this.fragment_index = 0;
         this.current_fragment = this.fragments.get(this.fragment_index);
         this.pushCarbonIntensity(this.current_fragment.getCarbonIntensity());
@@ -135,12 +153,22 @@ public class CarbonModel extends FlowNode {
 
     public double[] getForecast(int forecastSize) {
         return this.fragments
-                .subList(
-                        Math.min(this.fragment_index + 1, this.fragments.size() - 1),
-                        Math.min(this.fragment_index + forecastSize, this.fragments.size()))
-                .stream()
-                .mapToDouble(CarbonFragment::getCarbonIntensity)
-                .toArray();
+            .subList(
+                Math.min(this.fragment_index + 1, this.fragments.size() - 1),
+                Math.min(this.fragment_index + forecastSize, this.fragments.size()))
+            .stream()
+            .mapToDouble(CarbonFragment::getCarbonIntensity)
+            .toArray();
+    }
+
+    public double[] getForecastWithErrors(int forecastSize) {
+        return this.fragmentsWithErrors
+            .subList(
+                Math.min(this.fragment_index + 1, this.fragmentsWithErrors.size() - 1),
+                Math.min(this.fragment_index + forecastSize, this.fragmentsWithErrors.size()))
+            .stream()
+            .mapToDouble(CarbonFragment::getCarbonIntensity)
+            .toArray();
     }
 
     public static <T, U> List<U> castList(List<T> list, Class<U> clazz) {
