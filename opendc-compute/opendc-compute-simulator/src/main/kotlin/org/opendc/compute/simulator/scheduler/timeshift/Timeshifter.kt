@@ -56,7 +56,7 @@ public interface Timeshifter : CarbonReceiver {
             return
         }
 
-        val forecast = carbonMod!!.getForecast(forecastSize)
+        val forecast = carbonMod!!.getForecastWithErrors(forecastSize)
         val localForecastSize = forecast.size
 
         val shortQuantileIndex = (localForecastSize * shortForecastThreshold).roundToInt()
